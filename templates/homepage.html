@@ -1,0 +1,42 @@
+<!Doctype HTML>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Academicool</title>
+    <meta name="keywords" content="">
+    <meta name='robots' content='index,follow'>
+    <meta name="apple-mobile-web-app-title" content="Unnamed Project">
+    <meta name='apple-mobile-web-app-capable' content='yes'>
+    <meta name='apple-touch-fullscreen' content='yes'>
+    <meta name='apple-mobile-web-app-status-bar-style' content='dark'>
+    <link href="/static/css/homepage.css" rel="stylesheet" type="text/css" />
+    <link href="/static/css/all.css" rel="stylesheet" type="text/css" />
+    <!-- <script src="//cdn.jsdelivr.net/npm/eruda" onload="eruda.init()"></script> -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+    <!-- TODO: do all meta tags -->
+  </head>
+  <body>
+    <header style="display: flex;
+   align-items:center;">
+      <img id="logo" width="50" height="50" alt="logo" src="/static/img/logo.png" style="vertical-align:middle;margin-right:10px;"/>
+      <span style="font-size:1.5rem;vertical-align:middle;">Academicool</span>
+      {%if loggedin%}
+        <button onclick="window.location.href='/course';" id="begin">Begin!</button>
+      {%else%}
+        <button onclick="window.location.href='/begin';" id="begin">Begin!</button>
+      {%endif%}
+    </header>
+    <br/>
+    <center>
+      <h1>Welcome to Academicool!</h1>
+      <div id="description">
+        The revolutionary learning app!
+      </div>
+    </center>
+    
+  </body>
+</html>

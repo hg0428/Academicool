@@ -1,0 +1,24 @@
+* {
+  transition: 0.2s;
+}
+#begin {
+  background-color: rgb(0, 122, 255);
+  color: white;
+  font-weight: 600;
+  font-size: 2rem;
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  border-radius: 16px;
+  padding: 9px 29px;
+}
+#begin:hover {
+  /*background-color: rgb(12, 124, 255);*/
+  transform: scale(1.07);
+  filter: brightness(105%);
+}
+#begin:active {
+  /*background-color: rgb(0, 100.8, 229.5);*/
+  transform: scale(0.97);
+  filter: brightness(95%);
+}

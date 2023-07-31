@@ -1,0 +1,156 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato&display=swap');
+:root {
+  --bottombar-height: 70px;
+  --topbar-height: 70px;
+  --highlight-color: #2980B9;
+  /* --main-color: #FFE6EE;
+  --accent-color: #D2BDB6;
+  --mix-highlight: #D0A5CC;
+  --drop-button-color: #D2BDB6;
+  --drop-button-shadow: #C0A3A0;
+  --text-color: black;
+  --font-weight: bold;
+  --hamburger-invert: 0%; */
+  --text-color: white;
+  --drop-button-color: rgb(0, 203, 50);
+  --drop-button-shadow: rgb(0, 166, 34);
+  --font-weight: normal;
+  --main-color: rgb(30, 30, 30);
+  --accent-color: #ddd;
+  --mix-highlight: rgb(33, 40, 75);
+  --hamburger-invert: 100%;
+  --profile-pic-size: 40px;
+}
+/* [data-style=Hudson] {
+  --text-color: white;
+  --drop-button-color: rgb(0, 203, 50);
+  --drop-button-shadow: rgb(0, 180, 40);
+  --font-weight: normal;
+  --main-color: rgb(30, 30, 30);
+  --accent-color: #ddd;
+  --mix-highlight: rgb(33, 40, 75);
+  --hamburger-invert: 100%;
+} */
+body, html {
+  background: var(--main-color);
+  color: var(--accent-color);
+  font-weight: var(--font-weight);
+  font-family: Lato;
+}
+button {
+  background-color: var(--accent-color);
+  color: var(--main-color);
+}
+ * {
+   direction: auto;
+ }
+:root, [theme=light] {
+	--dynamic-blue:rgb(0, 122, 255);
+	--dynamic-blue-alt:rgb(10, 132, 255);
+  --grey-1: rgb(240, 240, 245);
+	--grey-2: rgba(245, 245, 248, .1);
+	--grey-accent: #eaeaef;
+	--button-grey:#f5f5f9;
+	--grey-hover: #ddd;
+	--pure:white;
+	--pure-invert:black;
+	--shadow-color: rgba(64, 60, 67, .16);
+	--main-background: rgb(245, 245, 245);
+	--button-color:rgb(233,233,233);
+	--button-color-2:rgb(223,223,224);
+	--button-color-3:rgb(214,214,216);
+}
+[theme=dark] {
+	--dynamic-blue:rgb(10, 132, 255);
+	--dynamic-blue-alt:rgb(0, 122, 255);
+	--grey-accent: rgb(38,38,45);
+	--grey-hover: rgb(45, 45, 52);
+    --grey-1: rgb(28,28,30);
+	--grey-2: rgba(25, 25, 28, .1);
+	--pure:black;
+	--pure-invert:white;
+	--shadow-color: rgba(126, 126, 130, .2);
+	--main-background: rgb(25, 25, 25);
+	--button-color:rgb(38,38,38);
+	--button-color-2:rgb(33,33,34);
+	--button-color-3:rgb(28,28,30);
+}
+
+input[type=submit],input[type=reset] {
+	border-radius:.66em;
+	border:none;
+	padding:6px;
+	padding-left:8px;
+	padding-right:8px;
+	font-size:14px;
+	background-color: var(--dynamic-blue);
+	-webkit-user-select:none;
+    -ms-user-select:none;
+    -moz-user-select:none;
+	transition: .2s;
+}
+input[type=reset] {
+	background-color:var(--grey-accent);
+	color:var(--dynamic-blue);
+}
+input[type=submit]:hover {
+	background-color: var(--dynamic-blue-alt);
+}
+button, input[type=button],input[type=file]::file-selector-button {
+	font-weight:bold;
+	-webkit-appearance:none;
+	appearance:none;
+	border:none;
+	color:var(--dynamic-blue);
+	border-radius:.3em;
+	padding:6px;
+	padding-left:8px;
+	padding-right:8px;
+	font-size:14px;
+	background: var(--button-color);
+	user-select:none;
+	-webkit-user-select:none;
+  -ms-user-select:none;
+  -moz-user-select:none;
+  cursor:pointer;
+	transition: .2s;
+}
+button:hover, input[type=button]:hover, input[type=file]::file-selector-button:hover {
+	-webkit-appearance:none;
+	appearance:none;
+	border-radius:.3em;
+	transform:scale(1.01);
+	background: var(--button-color-2);
+}
+button:active, input[type=button]:active,input[type=file]::file-selector-button:active{
+	transform: scale(0.98);
+	background: var(--button-color-3);
+}
+button[type=borderChange], .borderChange {
+	background:transparent;
+	color:var(--dynamic-blue);
+	border:2px solid var(--dynamic-blue);
+}
+button[type=borderChange]:hover, .borderChange:hover {
+	background:var(--dynamic-blue);
+	color:var(--pure);
+  cursor:none;
+	border:2px solid var(--dynamic-blue);
+}
+button[type=borderChange]:active, .borderChange:active {
+	border-width:2.5px;
+}
+button.shadow-press {
+  padding: 0.7rem 2rem;
+  background-color: var(--drop-button-color);
+  font-size: 1.3rem;
+  box-shadow: 0 5px 0 var(--drop-button-shadow);
+  color: var(--main-color);
+}
+button.shadow-press:active {
+  transform: translateY(5px);
+  box-shadow: none;
+}
+a {
+  color: var(--highlight-color);
+}

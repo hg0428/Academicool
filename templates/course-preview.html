@@ -1,0 +1,53 @@
+<!Doctype HTML>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Unnamed Project - {{course['titles']['course']}}</title>
+    <script src="//cdn.jsdelivr.net/npm/eruda" onload="eruda.init()"></script>
+    <link href="/static/css/all.css" rel="stylesheet" type="text/css" />
+    <link href="/static/css/dropdown.css" rel="stylesheet" type="text/css" />
+    <!-- TODO: do all meta tags -->
+    <script>
+      function abandon() {
+        let x = prompt(`Are you sure you want to ABANDON "{{course['titles']['course']}}"? If so, type the course name to confirm.`);
+        if (x.toLowerCase().trim() === "{{course['titles']['course']}}".toLowerCase().trim())
+          window.location.href='/course/remove/{{course['id']}}';
+        else alert('Course not abandoned.')
+      }
+    </script>
+  </head>
+  <body>
+    <button onclick="window.location.href='/course/new';">Browse Courses</button>
+    <div id="profile-dropdown" class="dropdown drop-right" onclick="myFunction('profile-dropdown')" style="position:fixed;right:5px;top:5px">
+        <img alt="hamburger" src="/static/img/hamburger.png" class="hamburger"/>
+        <img alt="profile" src="{{user['pic']}}" class="profile-pic"/>
+        <div class="dropdown-content">
+          {%if loggedin%}
+            <a onclick="alert('Replit does not currently support logout.');">Logout</a>
+          {%else%}
+            <a href="/begin">Login</a>
+          {%endif%}
+          <a>Account</a>
+          <a href="/static/documents/community-guidelines.html">Guidelines</a>
+        </div>
+    </div>
+    <h1>{{course['titles']['course']}}</h1>
+    {% if course['id'] not in user['courses'] %}
+      <button onclick="window.location.href='/course/add/{{course['id']}}';">Start!</button>
+    {%else%}
+      <button onclick="abandon();">Abandon</button> <!--TODO: add confirm by typing the course name -->
+    {% endif %}
+    {% if user and user['id'] in course['editors'] %}
+      <button onclick="window.location.href=`/course/edit/{{course['id']}}`">Edit</button>
+    {% endif %}
+    <p>{{course['description']}}</p>
+    <h2>Course Parts:</h2>
+    <ul> <!-- Or ol?-->
+      {% for x in course['concepts'] %}
+        <li>{{x}}</li>
+      {%endfor%}
+    </ul>
+    <script src="/static/js/dropdown.js" type="text/javascript"></script>
+  </body>
+</html>

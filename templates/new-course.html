@@ -1,0 +1,132 @@
+<!Doctype HTML>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Academicool - new course</title>
+    <link href="/static/css/dropdown.css" rel="stylesheet" type="text/css" />
+    <link href="/static/css/all.css" rel="stylesheet" type="text/css" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <!-- <script src="//cdn.jsdelivr.net/npm/eruda" onload="eruda.init()"> -->
+    </script>
+    <!-- TODO: do all meta tags -->
+    <style>
+      :root, [theme=light] {
+    	--dynamic-blue:rgb(0, 122, 255);
+    	--dynamic-blue-alt:rgb(10, 132, 255);
+      --grey-1: rgb(28,28,30);
+    	--grey-2: rgba(25, 25, 28, .1);
+    	--pure:black;
+    	--pure-invert:white;
+    	--shadow-color: rgba(126, 126, 130, .2);
+    	--main-background: rgb(25, 25, 25);
+    	--button-color:rgb(38,38,38);
+    	--button-color-2:rgb(33,33,34);
+    	--button-color-3:rgb(28,28,30);
+    }
+      .card, card {
+        -ms-user-select:contain;
+        -moz-user-select:contain;
+        cursor: pointer;
+    		user-select:contain;
+    		-webkit-user-select:contain;
+    		display:inline-block;
+        text-align: center;
+        border-radius: 2vmin;
+        border: 0px solid #ccc;
+        box-shadow:0 0 25px 15px var(--shadow-color);
+        width:250px;
+    		height:275px;
+        transition:0.3s;
+        margin:50px;
+        padding:10px;
+        background-color:var(--grey-1);
+        transform-style: preserve-3d;
+        transform: perspective(1000px);
+    }
+    .js-tilt-glare {
+      border-radius: 2vmin;
+    }
+    .card:hover {
+        transform: scale(1.03);
+    }
+    .card:active {
+      transform: scale(0.95);
+    }
+    .card h2, .card p{
+      transform: translateZ(30px);
+      text-shadow: 0 0 8px var(--shadow-color);
+      user-select: none;
+      -webkit-user-select:none;
+      -ms-user-select:none;
+      -moz-user-select:none;
+      cursor: pointer;
+    }
+    .card #creator {
+      margin-top: 10px;
+      display: flex;
+      align-items:center;
+      justify-content: center;
+      transform: translateZ(25px);
+      transition: 0.3s;
+      user-select: none;
+      -webkit-user-select:none;
+      -ms-user-select:none;
+      -moz-user-select:none;
+      cursor: pointer;
+      line-height: var(--profile-pic-size);
+      vertical-align: middle;
+      height: calc(var(--profile-pic-size) + 2px);
+    }
+    .card #creator * {
+      user-select: none;
+      -webkit-user-select:none;
+      -ms-user-select:none;
+      -moz-user-select:none;
+      cursor: pointer;
+    }
+    .card #creator span {
+      font-size: calc(var(--profile-pic-size) / 2.3);
+    }
+    .card #creator:hover {
+      transform: translateZ(40px);
+      filter: brightness(120%);
+    }
+    </style>
+  </head>
+  <body>
+    <button onclick="window.location.href='/course';" class="shadow-press">Home</button>
+    <button onclick="window.location.href='/course/create'" class="shadow-press">Create Course</button>
+    <div id="profile-dropdown" class="dropdown drop-right" onclick="myFunction('profile-dropdown')" style="position:fixed;right:5px;top:5px">
+        <img alt="hamburger" src="/static/img/hamburger.png" class="hamburger"/>
+        <img alt="profile" src="{{user['pic']}}" class="profile-pic"/>
+        <div class="dropdown-content">
+          {%if loggedin%}
+            <a onclick="alert('Replit does not currently support logout.');">Logout</a>
+            <a href="/account">Account</a>
+          {%else%}
+            <a href="/begin">Login</a>
+          {%endif%}
+          <a href="/static/documents/community-guidelines.html">Guidelines</a>
+        </div>
+    </div>
+    <h1>{{message}}</h1>
+    {% for course in courses %}
+        <div class="card" onclick="window.location.href='/course/preview/{{course}}';" data-tilt  data-tilt-glare data-tilt-max-glare="0.5" data-tilt-speed="600" data-tilt-perspective="900" data-tilt-max="40">
+          <div style="position:relative;" id="creator">
+            <img src="{{users[courses[course]['creator']]['pic']}}" class="profile-pic">
+          <span>{{users[courses[course]['creator']]['user-name']}}</span>
+          </div>
+          <h2>{{courses[course]['titles']['course']}}</h2>
+          {% if courses[course].get('description') %}
+          <p>{{courses[course]['description'][:200]}}</p>
+          {%endif%}
+        </div>
+    {% endfor %}
+    <script src="/static/js/tilt.min.js" type="text/javascript"></script>
+    <script src="/static/js/dropdown.js" type="text/javascript"></script>
+  </body>
+</html>

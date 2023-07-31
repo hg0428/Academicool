@@ -1,0 +1,107 @@
+<!Doctype HTML>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>Academicool</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="manifest" href="/site.webmanifest">
+    <link href="/static/css/all.css" rel="stylesheet" type="text/css" />
+    <link href="/static/css/course-page.css" rel="stylesheet" type="text/css" />
+    <link href="/static/css/dropdown.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/markdown.js/0.5.0/markdown.min.js" integrity="sha512-kaDP6dcDG3+X87m9SnhyJzwBMKrYnd2tLJjGdBrZ9yEL8Zcl2iJRsPwylLkbd2g3QC5S8efV3sgwI5r73U0HnA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+     <script src="//cdn.jsdelivr.net/npm/eruda" onload="eruda.init()"></script> 
+  </head>
+  <body>
+    {% if course %}
+      <div class="fullwidth" id="topbar">
+        <div class="dropdown" id="course-selector">
+          <button id="course-selector-dropdown-trigger" class="dropbtn" onclick="myFunction('course-selector')">
+            <img src="/static/img/arrow.svg"/>{{course['titles']['course']}}</button>
+          <div id="course-selector-dropdown-content" class="dropdown-content">
+            <a>{{course['titles']['course']}}</a>
+            {% for c in user['courses'] %}
+              {%if c != course['id']%}
+              <a href="/course?course_id={{c|urlencode}}">{{user['courses'][c]['course-title']}}</a>
+              {%endif%}
+            {% endfor %}
+            <a href="/course/new">+ New</a>
+          </div>
+        </div>
+        <!-- <button id="themechange" onclick="if (document.documentElement.getAttribute('data-style') === 'Hudson'){document.documentElement.setAttribute('data-style', 'default');themechange.innerText='Use Hudson\'s style';}else {document.documentElement.setAttribute('data-style', 'Hudson');themechange.innerText='Use default style';}">Use Hudson's style</button> -->
+        <div id="section-selector" class="dropdown">
+          <button id="section-selector-dropdown-trigger" class="dropbtn" onclick="myFunction('section-selector')">
+            <img src="/static/img/arrow.svg"/>{{course['titles']['learn']}}</button>
+            <div id="section-selector-dropdown-content" class="dropdown-content">
+              <a class="learn-btn">{{course['titles']['learn']}}</a>
+              <a class="concepts-btn">{{course['titles']['concepts']}}</a>
+              <a class="problems-btn">{{course['titles']['problems']}}</a>
+            </div>
+        </div>
+        <div id="profile-dropdown" class="dropdown drop-right" onclick="myFunction('profile-dropdown')">
+          <img alt="hamburger" src="/static/img/hamburger.png" class="hamburger"/>
+          {% if user %}
+          <img alt="profile" src="{{user['pic']}}" class="profile-pic"/>
+          {% else%}
+          <img alt="profile" src="/static/img/default-profile.png" class="profile-pic"/>
+          {%endif%}
+          <div class="dropdown-content">
+            {%if loggedin%}
+              <a onclick="alert('Replit does not currently support logout.');">Logout</a>
+              <a href="/account">Account</a>
+            {%else%}
+              <a href="/begin">Login</a>
+            {%endif%}
+            <a href="/static/documents/community-guidelines.html">Guidelines</a>
+          </div>
+        </div>
+      </div>
+      <div class="fullwidth" id="bottombar">
+        <a class="learn-btn current">{{course['titles']['learn']}}</a>
+        <a class="concepts-btn">{{course['titles']['concepts']}}</a>
+        <a class="problems-btn">{{course['titles']['problems']}}</a>
+      </div>
+      <div class="section" id="learn-section">
+        <center>
+          <button class="shadow-press" onclick="runPersonalized();">Personalized Practice</button>
+        </center>
+      {%for lesson in ((list(course['data'].keys()))|unique)%}
+        {% if user and lesson in user['courses'][course.id]['completed-lessons'] %}
+          <h2 class="white" id="lesson-title-{{list(course['data'].keys()).index(lesson)}}">{{lesson}} ✅</h2>
+        {% else %}
+        <h2 class="white" id="lesson-title-{{list(course['data'].keys()).index(lesson)}}">{{lesson}}</h2>
+        {%endif%}
+        
+        <button onclick="runLesson('{{lesson}}')" class="shadow-press">Start!</button>
+      {%endfor%}
+      </div>
+      <div class="section" id="concepts-section">
+        {%if len(user['completed-lessons']) == 0%}
+        <h2>When you complete a lesson, the lesson concepts will be collected here.</h2>
+        {%endif%}
+      </div>
+      <div class="section" id="problems-section">
+      </div>
+      <div class="overlay" id="class-overlay">
+        <button id="class-overlay-back-btn" onclick="document.getElementById('class-overlay').classList.remove('active');">X</button>
+        <div id="class-overlay-content">
+          
+        </div>
+        <div id="progress-dots">
+          
+        </div>
+        <button id="class-overlay-continue-btn" style="z-index:5;" class="shadow-press">Continue</button>
+      </div>
+    {% else %}
+    Redirecting...
+    {%endif%}
+    <script src="/static/js/dropdown.js" type="text/javascript"></script>
+    <script>
+      const course = {{ course|tojson|safe }};
+      const user = {{ user|tojson|safe }};
+    </script>
+    <script src="/static/js/course.js"></script>
+  </body>
+</html>

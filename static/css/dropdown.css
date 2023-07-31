@@ -1,0 +1,134 @@
+.dropbtn {
+  background-color: var(--highlight-color);
+  color: white;
+  padding: 16px;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+  display: inline-block;
+  user-select: none;
+	-webkit-user-select: none;
+  -ms-user-select: none;
+  -moz-user-select: none;
+  cursor: pointer;
+}
+.dropbtn img {
+  width: 15px;
+  height: 15px;
+  display:inline-block;
+  vertical-align:top;
+  transform: rotate(-90deg);
+  margin-right: 5px;
+  user-select: none;
+	-webkit-user-select: none;
+  -ms-user-select: none;
+  -moz-user-select: none;
+  cursor: pointer;
+}
+/* Dropdown button on hover & focus */
+.dropbtn:hover, .dropbtn:focus {
+  background-color: var(--highlight-color);
+}
+
+/* The container <div> - needed to position the dropdown content */
+.dropdown {
+  position: relative;
+  display: inline-block;
+  user-select: none;
+	-webkit-user-select: none;
+  -ms-user-select: none;
+  -moz-user-select: none;
+  cursor: pointer;
+}
+.dropdown * {
+  transition: 0.3s;
+}
+/* Dropdown Content (Hidden by Default) */
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: var(--main-color);
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 3;
+  user-select: none;
+	-webkit-user-select: none;
+  -ms-user-select: none;
+  -moz-user-select: none;
+  cursor: pointer;
+}
+
+/* Links inside the dropdown */
+.dropdown-content a {
+  color: var(--text-color);
+  background-color: var(--main-color);
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  text-align: center;
+  vertical-align: center;
+  user-select: none;
+	-webkit-user-select: none;
+  -ms-user-select: none;
+  -moz-user-select: none;
+  cursor: pointer;
+}
+
+/* Change color of dropdown links on hover */
+.dropdown-content a:hover {
+  filter: brightness(155%);
+}
+
+/* Show the dropdown menu (use JS to add this class to the .dropdown-content container when the user clicks on the dropdown button) */
+.dropdown.show .dropdown-content {display:block;}
+.dropdown.show button img {
+  transform: rotate(0);
+}
+.fullwidth {
+  width: 100vw;
+  position: fixed;
+}
+
+.profile-pic {
+  width: var(--profile-pic-size);
+  height: var(--profile-pic-size);
+  border-radius: 50%;
+  border: 1px solid darkgray;
+  background-color: white;
+  margin: 5px;
+}
+.hamburger {
+  width: 30px;
+  height: 30px;
+  filter: invert(var(--hamburger-invert));
+}
+#profile-dropdown {
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  text-align: center;
+  vertical-align: center;
+  user-select: none;
+	-webkit-user-select: none;
+  -ms-user-select: none;
+  -moz-user-select: none;
+  cursor: pointer;
+  z-index: 2;
+  align: right;
+  text-align: center;
+  vertical-align:middle;
+}
+#profile-dropdown * {
+  text-align: center;
+  vertical-align:middle;
+}
+.dropdown.drop-right .dropdown-content{
+  right: 0;
+}
+@media only screen and (max-width: 500px) {
+  body {
+    /*To move buttons to below the profile.*/
+    padding-top: 100px;
+  }
+}

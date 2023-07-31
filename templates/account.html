@@ -1,0 +1,127 @@
+<!Doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>My account - Academicool</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <link href="/static/css/all.css" rel="stylesheet" type="text/css" />
+    <link href="/static/css/dropdown.css" rel="stylesheet" type="text/css" />
+    <script src="//cdn.jsdelivr.net/npm/eruda" onload="eruda.init()"></script> 
+    <style>
+      button {
+        margin: 12px;
+      }
+      input[type=text] {
+        width: 300px;
+      }
+    </style>
+  </head>
+  <body>
+    <button onclick="window.location.href='/course';">Home</button>
+    <div id="profile-dropdown" class="dropdown drop-right" onclick="myFunction('profile-dropdown')" style="position:fixed;right:5px;top:5px">
+      <img alt="hamburger" src="/static/img/hamburger.png" class="hamburger"/>
+      {% if user %}
+      <img alt="profile" src="{{user['pic']}}" class="profile-pic"/>
+      {% else%}
+      <img alt="profile" src="/static/img/default-profile.png" class="profile-pic"/>
+      {%endif%}
+      <div class="dropdown-content">
+        {%if loggedin%}
+          <a onclick="alert('Replit does not currently support logout.');">Logout</a>
+          <a href="/account">Account</a>
+        {%else%}
+          <a href="/begin">Login</a>
+        {%endif%}
+        <a href="/static/document/community-guidelines.html">Guidelines</a>
+      </div>
+    </div>
+    
+    <br/>
+    <br/>
+    <br/>
+    <h2>{{message}}</h2>
+    <button onclick="confirmAction('reset your data', ()=>window.location.href='/account/reset/confirmed')" class="shadow-press">Reset Data</button>
+    <br/><br/><br/>
+    <h2>Upload file:</h2>
+    <form method=post enctype=multipart/form-data>
+      <input type=file name=file>
+      <br/><br/><br/>
+      <input type=submit value=Upload>
+    </form>
+    <h2>My files:</h2>
+    <h3 id="data-amt">{{100*user['uploaded_bytes']/data_limit}}% ({{(data_limit-user['uploaded_bytes'])/1000}}kb remaining)</h3>
+    <ul id="user-files">
+    </ul>
+    <script>
+      const user = {{ user|tojson|safe }};
+      const files_el = document.getElementById('user-files');
+      const data_amt = document.getElementById('data-amt');
+      function request(url, data, callback) {
+        let xhr = new XMLHttpRequest();
+        xhr.open("POST", url, true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.onreadystatechange = () => {
+          if (xhr.readyState === 4) {
+            console.log(xhr.status, xhr.responseText);
+            callback(xhr);
+          }
+        }
+        xhr.send(JSON.stringify(data));
+      }
+      function confirmAction(action, callback, item, name) {
+        console.log(item, user['user-name'])
+        item = item || user['user-name'];
+        let test = prompt(`Are you sure you want to ${action}? Type ${name || 'your username'} (${item}) to continue.`);
+        if (test && test.toLowerCase().trim() == item.toLowerCase().trim()) callback();
+      }
+      let clipboard_perms = true;
+      navigator.permissions.query({ name: "clipboard-write" }).then((result) => {
+        if (result.state === "granted" || result.state === "prompt")
+          clipboard_perms = true;
+        else 
+          clipboard_perms = false;
+      });
+      for (let f of user['files']) {
+        let li = document.createElement('li');
+        let link = document.createElement('button');
+        let del = document.createElement('button')
+        link.innerText='Copy Link';
+        del.innerText='Delete';
+        del.onclick = e => {
+          confirmAction('delete', () => {
+            request('/api/delete-file', {file: f}, xhr => {
+              if (xhr.readyState !== 4 || xhr.status !== 200 || JSON.parse(xhr.responseText).error)
+                alert('Failed to delete file.')
+              else {
+                li.remove();
+                let data = JSON.parse(xhr.responseText);
+                data_amt.innerText = `${100*data.uploaded_bytes/data.data_limit}% (${(data.data_limit-data.uploaded_bytes)/1000}kb remaining)`;
+              }
+            });
+          }, f, 'the filename');
+        }
+        link.onclick = e => {
+          navigator.clipboard.writeText(`/static/files/${f}`).then(
+            () => {
+              alert('Link coppied to clipboard.')
+              /* clipboard successfully set */
+            },
+            () => {
+              alert('Failed to copy.')
+              /* clipboard write failed */
+            },
+          );
+        }
+        li.innerText = f;
+        li.appendChild(del);
+        li.appendChild(link);
+        files_el.appendChild(li);
+      }
+    </script>
+    <script src="/static/js/dropdown.js" type="text/javascript"></script>
+  </body>
+</html>
