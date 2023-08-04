@@ -36,8 +36,10 @@ for course_file in course_files.iterdir():
           req_concepts.append(oldToNew[c])
         course['problems'][lesson][p['id']]['required-concepts'] = req_concepts
     course['concepts'] = concepts
-  if 'problems' in course:
+  if 'data' not in course:
     course['data'] = course['problems']
+  if 'problems' in course:
+    del course['problems']
   if 'sections' not in course: # Hold potential collection items here then just collect by id?
     course['sections'] = []
   #TODO; rename to data
@@ -134,6 +136,7 @@ async def before_req():
               os.path.join(UPLOAD_FOLDER, f)).st_size
       db[g.user_id]['version'] = 3
     g.user = json.loads(db.get_raw(g.user_id))
+  print(g.user)
 
 
 @app.route('/')
@@ -223,7 +226,7 @@ async def course_preview(course_id):
   return await render_template('course-preview.html',
                                course=courses[course_id],
                                loggedin=g.loggedin,
-                               user=g.user)
+                               user=g.user, creator=db[courses[course_id]['creator']])
 
 
 @app.route('/course/add/<course_id>')
@@ -292,7 +295,7 @@ async def create_course():
           'concepts': 'Concepts',
           'problems': 'Problems'
       },
-      "concepts": {},
+      "concepts": [],
       "problems": {},
       "lessons": {}
   }
@@ -348,8 +351,6 @@ async def save_course():
         del data['data'][lesson]
       elif type(data['data'][lesson]) != list:
         data['data'][lesson] = []
-      if lesson not in data['concepts']:
-        data['concepts'][lesson] = []
       for problem in data['data'][lesson]:
         if problem.get('type') not in valid_problem_types:
           if type(problem.get('options')) == list:

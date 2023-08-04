@@ -16,7 +16,7 @@
   </head>
   <body>
     {% if course %}
-      <div class="fullwidth" id="topbar">
+      <div class="fullwidth space-between" id="topbar">
         <div class="dropdown" id="course-selector">
           <button id="course-selector-dropdown-trigger" class="dropbtn" onclick="myFunction('course-selector')">
             <img src="/static/img/arrow.svg"/>{{course['titles']['course']}}</button>
@@ -85,7 +85,7 @@
       <div class="section" id="problems-section">
       </div>
       <div class="overlay" id="class-overlay">
-        <button id="class-overlay-back-btn" onclick="document.getElementById('class-overlay').classList.remove('active');">X</button>
+        <button class="popup-back-btn" id="class-overlay-back-btn" onclick="document.getElementById('class-overlay').classList.remove('active');">X</button>
         <div id="class-overlay-content">
           
         </div>

@@ -154,3 +154,28 @@ button.shadow-press:active {
 a {
   color: var(--highlight-color);
 }
+.popup-back-btn {
+  color:grey;
+  font-weight:200;
+  font-size:3rem;
+  font-family:sans-serif;
+  background-color:transparent;
+}
+.popup-back-btn:hover {
+  transform: scale(105%);
+  background-color:transparent;
+}
+.popup-back-btn:active {
+  transform: scale(99%);
+  background-color:transparent;
+}
+.space-between {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-content: center;
+  align-items: center;
+  vertical-align: middle;
+  width: 100%;
+  box-sizing: border-box;
+}

@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
-    <title>Unnamed Project - {{course['titles']['course']}}</title>
+    <title>Academicool - {{course['titles']['course']}}</title>
     <script src="//cdn.jsdelivr.net/npm/eruda" onload="eruda.init()"></script>
     <link href="/static/css/all.css" rel="stylesheet" type="text/css" />
     <link href="/static/css/dropdown.css" rel="stylesheet" type="text/css" />
@@ -16,6 +16,36 @@
         else alert('Course not abandoned.')
       }
     </script>
+    <style>
+      .creator {
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.3s;
+      user-select: none;
+      -webkit-user-select:none;
+      -ms-user-select:none;
+      -moz-user-select:none;
+      cursor: pointer;
+      line-height: var(--profile-pic-size);
+      vertical-align: middle;
+      height: calc(var(--profile-pic-size) + 2px);
+    }
+    .creator * {
+      user-select: none;
+      -webkit-user-select:none;
+      -ms-user-select:none;
+      -moz-user-select:none;
+      cursor: pointer;
+    }
+    .creator span {
+      font-size: calc(var(--profile-pic-size) / 2.3);
+    }
+    .creator:hover {
+      filter: brightness(120%);
+    }
+    </style>
   </head>
   <body>
     <button onclick="window.location.href='/course/new';">Browse Courses</button>
@@ -33,8 +63,12 @@
         </div>
     </div>
     <h1>{{course['titles']['course']}}</h1>
+    <div style="position:relative;" class="creator">
+      <img src="{{creator['pic']}}" class="profile-pic">
+      <span>{{creator['user-name']}}</span>
+    </div>
     {% if course['id'] not in user['courses'] %}
-      <button onclick="window.location.href='/course/add/{{course['id']}}';">Start!</button>
+      <button onclick="window.location.href='/course/add/{{course['id']}}';" class="shadow-press">Start!</button>
     {%else%}
       <button onclick="abandon();">Abandon</button> <!--TODO: add confirm by typing the course name -->
     {% endif %}
@@ -44,7 +78,7 @@
     <p>{{course['description']}}</p>
     <h2>Course Parts:</h2>
     <ul> <!-- Or ol?-->
-      {% for x in course['concepts'] %}
+      {% for x in course['data'] %}
         <li>{{x}}</li>
       {%endfor%}
     </ul>
