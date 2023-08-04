@@ -16,6 +16,8 @@
     <script src="/static/js/tagify.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.css">
     <script src="https://cdn.jsdelivr.net/simplemde/latest/simplemde.min.js"></script> 
+    <!-- jsDelivr :: Sortable :: Latest (https://www.jsdelivr.com/package/npm/sortablejs) -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <style>
       input, textarea {
       user-select:contain;
@@ -178,6 +180,39 @@
       #tagify-editors-input {
         width: 350px !important;
       }
+      .editor-popup {
+        background: var(--main-color);
+        box-shadow: 0 0 100px 100px darkgrey;
+        padding: 15px;
+        z-index: 10;
+        max-width: 700px;
+        max-height: 700px;
+        width: 100%;
+        height: 100%;
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translateX(-50%) translateY(-50%);
+        overflow-y: auto;
+        overflow-x: hidden;
+        box-sizing: border-box;
+        border-radius: 5%;
+      }
+      .data-item {
+        font-size: 20px;
+        border: var(--highlight-color);
+        border-radius: 10px;
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-content: center;
+        align-items: center;
+        vertical-align: middle;
+        margin: 10px;
+        padding: 5px;
+        border: 1px solid grey;
+        /*https://sortablejs.github.io/Sortable/*/
+      }
     </style>
   </head>
   <body>
@@ -232,6 +267,9 @@
     <textarea id="raw-course-json" style="border-left: 2px solid green;">{{course|tojson}}</textarea>
     <script src="/static/js/dropdown.js" type="text/javascript"></script>
     <script>
+      //https://github.com/SortableJS/Sortable#cdn
+      //Allow draging between lists (from problem to problem), but NOT from concept to problem.
+      //Add multidrag.
       let users = {{ users|tojson|safe }};
       let user = {{user|tojson|safe}};
       let course_data = {{course|tojson|safe}}
@@ -291,15 +329,18 @@
       }
       let json_data;
       let required = {
-        'concepts': 'object',
-        'problems': 'object',
-        'titles': 'object'
+        'concepts': ['Array', Array.isArray],
+        'data': ['Object', o => typeof o === 'object' && !Array.isArray(o) && o !== null],
+        'titles': ['Object', o => typeof o === 'object' && !Array.isArray(o) && o !== null],
+        'sections': ['Array', Array.isArray]
       }
-      let types = ['multiple-choice', 'checkbox', 'text', 'number'];
+      
+      let types = ['multiple-choice', 'checkbox', 'text', 'number', 'data', 'collection'];
+      let problem_types = ['multiple-choice', 'checkbox', 'text', 'number'];
       let scopes = ['required', 'extra'];
       let text_data_md_vars = {};
       let text_data_md_vars_concepts = {};
-    
+      let tagify_data = {};
       function createConceptEditor(concept, concepts_sect, id) {
         let concept_sect_label = document.createElement('h5');
         let concept_sect = document.createElement('div');
@@ -387,26 +428,48 @@
         }
         concept_sect.appendChild(delete_btn);
       }
-    
       function createProblemEditor(problem, lesson, lesson_id, problems_sect) {
-        let problem_sect_label = document.createElement('h5');
+        let problem_sect_label = document.createElement('div');
         let problem_sect = document.createElement('div');
         problems_sect.appendChild(problem_sect_label);
-        problems_sect.appendChild(problem_sect);
-        problem_sect.id = `problem-sect-${lesson_id}-${problem.id}`
-        problem_sect.style['padding-left'] = '6px';
-        problem_sect_label.innerText = `˃ Problem ${problem.id}`;
+        problem_sect.classList.add('editor-popup');
+        problem_sect.id = `problem-sect-${lesson_id}-${problem.id}`;
+        let sect_name = 'Problem';
+        if (problem.type === 'data')
+          sect_name = 'Data Page';
+        else if (problem.type === 'collection')
+          sect_name = 'Collection';
+        //˃ and ˅ 
+        // https://sortablejs.github.io/Sortable/
+        problem_sect_label.innerText =`${sect_name} ${problem.id}`;
+        problem_sect_label.classList.add('data-item');
+        problem_sect_label.id = `problem-sect-label-${lesson_id}-${problem.id}`;
         problem_sect.style.display = 'none';
         problem_sect_label.classList.add('clickable-text');
         problem_sect_label.onclick = function() {
-          if (problem_sect.style.display === 'none') {
+          if (problem_sect.style.display === 'none')
             problem_sect.style.display = 'block';
-            problem_sect_label.innerText = `˅ Problem ${problem.id}`;
-          } else {
-            problem_sect.style.display = 'none';
-            problem_sect_label.innerText = `˃ Problem ${problem.id}`;
-          }
         }
+        problems_sect.appendChild(problem_sect);
+        problem_sect.style = 'padding-top:60px;display:none;';
+        let topdiv = document.createElement('div');
+        topdiv.classList.add('space-between');
+        topdiv.style='position:fixed;left:0;top:0;padding: 10px 20px;'
+        let problem_sect_popup_label = document.createElement('h2');
+        problem_sect_popup_label.innerText = `Editing ${sect_name} ${problem.id}`;
+        topdiv.appendChild(problem_sect_popup_label);
+        let exit_btn = document.createElement('button');
+        exit_btn.classList.add('popup-back-btn');
+        exit_btn.onclick = e => {
+          problem_sect.style.display = 'none';
+        }
+        exit_btn.innerText = 'X';
+        topdiv.appendChild(exit_btn);
+        problem_sect.appendChild(topdiv);
+        if (!tagify_data[lesson_id])
+          tagify_data[lesson_id] = {};
+        if (!tagify_data[lesson_id][problem.id])
+          tagify_data[lesson_id][problem.id] = {};
         //Type selector
         let type = document.createElement('select');
         let type_label = document.createElement('label');
@@ -424,9 +487,10 @@
         //Scope selector
         let scope = document.createElement('select');
         let scope_label = document.createElement('label');
-        scope_label.for = `scope-selector-${lesson_id}-${problem.id}`;
         scope_label.innerText = 'Scope: ';
         scope.id = `scope-selector-${lesson_id}-${problem.id}`;
+        scope_label.for = `scope-selector-${lesson_id}-${problem.id}`;
+        scope_label.id =  `scope-selector-label-${lesson_id}-${problem.id}`;
         scope.name = 'scope';
         for (let s in scopes)
           scope.innerHTML += `<option value="${scopes[s]}">${scopes[s]}</option>`;
@@ -435,6 +499,7 @@
         scope.value = problem.scope;
         scope.selected_index = scopes.indexOf(problem.scope);
         scope.onchange = onchange;
+        
         //Case-sensitive only show if text
         let case_sensitive_label = document.createElement('label');
         let case_sensitive = document.createElement('input');
@@ -444,10 +509,7 @@
         case_sensitive_label.for = `case-sensitive-${lesson_id}-${problem.id}`;
         case_sensitive_label.id = `case-sensitive-label-${lesson_id}-${problem.id}`;
         case_sensitive.name = 'case-sensitive';
-        if (problem.type !== 'text') {
-          case_sensitive_label.style.display = 'none';
-          case_sensitive.style.display = 'none';
-        } else if (problem['case-sensitive'])
+        if (problem['case-sensitive'])
           case_sensitive.checked = true;
         problem_sect.appendChild(case_sensitive_label);
         problem_sect.appendChild(case_sensitive);
@@ -457,6 +519,7 @@
         let answers_label = document.createElement('label');
         let answers = document.createElement('input');
         answers.id = `answers-${lesson_id}-${problem.id}`;
+        answers_label.id = `answers-label-${lesson_id}-${problem.id}`;
         answers_label.for = `answers-${lesson_id}-${problem.id}`;
         answers_label.innerText = "Correct Answers: "
         answers.name = 'answers';
@@ -472,6 +535,7 @@
           enforceWhitelist: false,
           delimiters: null,
         });
+        tagify_data[lesson_id][problem.id].answers = tagify;
         answers.onchange = onchange;
         //Options
         let options_label = document.createElement('label');
@@ -481,7 +545,7 @@
         options_label.innerText = "Options: "
         options.name = 'options';
         let opt = [];
-        if (['multiple-choice', 'checkbox'].includes(problem.type)) {
+        if (problem.options) {
           for (let option of problem.options)
             opt.push({
               value: option
@@ -497,11 +561,7 @@
         });
         options = tagify.DOM.input;
         options.id = `options-${lesson_id}-${problem.id}`;
-        if (!['multiple-choice', 'checkbox'].includes(problem.type)) {
-          options_label.style.display = 'none';
-          options.style.transform = 'translateX(-10000)';
-          options.style.display = 'none';
-        }
+        tagify_data[lesson_id][problem.id].options = tagify;
         options.onchange = onchange;
         //Required Concepts
         let concepts_label = document.createElement('label');
@@ -517,6 +577,7 @@
             value: concept
           });
         concepts.value = JSON.stringify(con);
+        concepts.onchange = onchange;
         problem_sect.appendChild(concepts_label);
         problem_sect.appendChild(concepts);
         tagify = new Tagify(concepts, {
@@ -531,16 +592,20 @@
             closeOnSelect: false // <- do not hide the suggestions dropdown once an item has been selected
           }
         });
-        concepts.onchange = onchange;
+        tagify_data[lesson_id][problem.id].concepts = tagify;
         //Data
+        let text_data_wrapper = document.createElement('div');
         let text_data_label = document.createElement('label');
         let text_data = document.createElement('textarea');
-        text_data.id = `text-data-${lesson_id}-${problem.id}`;
-        text_data_label.for = `text-data-${lesson_id}-${problem.id}`;
+        text_data.id = `text-data-textarea-${lesson_id}-${problem.id}`;
+        text_data_wrapper.id = `text-data-${lesson_id}-${problem.id}`;
+        text_data_label.id = `text-data-label-${lesson_id}-${problem.id}`;
+        text_data_label.for = `text-data-textarea-${lesson_id}-${problem.id}`;
         text_data_label.innerText = 'Text:';
         text_data.name = 'text-data';
-        problem_sect.appendChild(text_data_label);
-        problem_sect.appendChild(text_data);
+        problem_sect.appendChild(text_data_wrapper);
+        text_data_wrapper.appendChild(text_data_label);
+        text_data_wrapper.appendChild(text_data);
         if (!text_data_md_vars[lesson_id])
           text_data_md_vars[lesson_id] = {};
         text_data_md_vars[lesson_id][problem.id] = new SimpleMDE({
@@ -553,7 +618,8 @@
         let background = document.createElement('input');
         background.name = 'background';
         background.type = 'text';
-        background_label.id = `background-${lesson_id}-${problem.id}`;
+        background.id = `background-${lesson_id}-${problem.id}`;
+        background_label.id = `background-label-${lesson_id}-${problem.id}`;
         background_label.for = `background-${lesson_id}-${problem.id}`;
         background_label.innerText = 'Background:';
         background.placeholder = 'Background';
@@ -566,7 +632,8 @@
         let audio = document.createElement('input');
         audio.type = 'text';
         audio.name = 'audio';
-        audio_label.id = `audio-${lesson_id}-${problem.id}`;
+        audio.id = `audio-${lesson_id}-${problem.id}`;
+        audio_label.id = `audio-label-${lesson_id}-${problem.id}`;
         audio_label.for = `audio-${lesson_id}-${problem.id}`;
         audio_label.innerText = 'Audio:';
         audio.placeholder = 'Audio file link';
@@ -583,14 +650,116 @@
           if (confirm.trim() == problem.id) {
             problem_sect.remove();
             problem_sect_label.remove();
-            json_data.problems[lesson] = json_data.problems[lesson].filter(el => el.id !== problem.id);
+            json_data.data[lesson] = json_data.data[lesson].filter(el => el.id !== problem.id);
             json_data_el.value = JSON.stringify(json_data, null, 2);
             format();
           } else alert('Not deleted');
         }
         problem_sect.appendChild(delete_btn);
+        if (!problem_types.includes(problem.type)) {
+          scope.style.display='none';
+          scope_label.style.display='none';
+          answers.style.display='none';
+          answers_label.style.display='none';
+          audio.style.display='none';
+          audio_label.style.display='none';
+          background.style.display='none';
+          background_label.style.display='none';
+          text_data.style.display='none';
+          text_data_label.style.display='none';
+          concepts_label.style.display = 'none';
+          concepts.style.transform = 'translateX(-10000)';
+          concepts.style.display = 'none';
+        }
+        handleItems(problem_sect, lesson_id, problem);
       }
-    
+      function handleItems(problem_page, id, problem) {
+        let type = problem_page.querySelector('select[name=type]');
+        let scope = problem_page.querySelector('select[name=scope]');
+        let case_sensitive = problem_page.querySelector('input[name=case-sensitive]');
+        let answers = problem_page.querySelector('input[name=answers]');
+        let options = problem_page.querySelector('input[name=options]');
+        let concepts = problem_page.querySelector('input[name=concepts]');
+        let audio = problem_page.querySelector('input[name=audio]');
+        let background = problem_page.querySelector('input[name=background]');
+        let text_data = document.getElementById(`text-data-${id}-${problem.id}`);
+        if (type.value === 'text') {
+          case_sensitive.style.display = 'block';
+          document.getElementById(`case-sensitive-label-${id}-${problem.id}`).style.display = 'block';
+        } else {
+          case_sensitive.style.display = 'none';
+          document.getElementById(`case-sensitive-label-${id}-${problem.id}`).style.display = 'none';
+        }
+        if (!problem_types.includes(problem.type)) {
+          hideTagify(tagify_data[id][problem.id].answers);
+          document.getElementById(`answers-label-${id}-${problem.id}`).style.display='none';
+          if (problem.type === 'collection') {
+            document.getElementById(`concepts-label-${id}-${problem.id}`).style.display = 'none';
+            hideTagify(tagify_data[id][problem.id].concepts);
+            document.getElementById(`scope-selector-label-${id}-${problem.id}`).style.display='none';
+            scope.style.display='none';
+            text_data.style.display='none';
+            document.getElementById(`text-data-label-${id}-${problem.id}`).style.display='none';
+            background.style.display='none';
+            document.getElementById(`background-label-${id}-${problem.id}`).style.display='none';
+          } else {
+            document.getElementById(`concepts-label-${id}-${problem.id}`).style.display = 'block';
+            showTagify(tagify_data[id][problem.id].concepts);
+            document.getElementById(`scope-selector-label-${id}-${problem.id}`).style.display='block';
+            scope.style.display='block';
+            text_data.style.display='block';
+            document.getElementById(`text-data-label-${id}-${problem.id}`).style.display='block';
+            background.style.display='block';
+            document.getElementById(`background-label-${id}-${problem.id}`).style.display='block';
+          }
+        } else {
+          showTagify(tagify_data[id][problem.id].answers);
+          document.getElementById(`answers-label-${id}-${problem.id}`).style.display='block';
+          document.getElementById(`concepts-label-${id}-${problem.id}`).style.display = 'block';
+          showTagify(tagify_data[id][problem.id].concepts);
+          document.getElementById(`scope-selector-label-${id}-${problem.id}`).style.display='block';
+          scope.style.display='block';
+          text_data.style.display='block';
+          document.getElementById(`text-data-label-${id}-${problem.id}`).style.display='block';
+          background.style.display='block';
+          document.getElementById(`background-label-${id}-${problem.id}`).style.display='block'
+        }
+        if (['multiple-choice', 'checkbox'].includes(problem.type)) {
+          document.getElementById(`options-label-${id}-${problem.id}`).style.display='block';
+          options.style.display = 'block';
+          showTagify(tagify_data[id][problem.id].options);
+        } else {
+          options.style.display = 'none';
+          document.getElementById(`options-label-${id}-${problem.id}`).style.display='none';
+          hideTagify(tagify_data[id][problem.id].options);
+        }
+      }
+      function hideTagify(tagify) {
+        tagify.DOM.input.style.display = 'none';
+        tagify.DOM.scope.style.display = 'none';
+        tagify.DOM.input.style.dropdown = 'none';
+      }
+      function showTagify(tagify) {
+        tagify.DOM.input.style.display = 'block';
+        tagify.DOM.scope.style.display = 'block';
+        tagify.DOM.input.style.dropdown = 'block';
+      }
+      function sortLesson(new_lesson_id, problems_sect, problem_regex) {
+        let new_lesson_data = [];
+        let elements = problems_sect.querySelectorAll('.data-item');
+        for (let el_id = 0; el_id < elements.length; el_id++) {
+          let el = elements[el_id];
+          el.innerText = `${el.innerText.split(' ').slice(0, -1).join(' ')} ${el_id}`;
+          let [or_lesson_id_, or_item_id] = problem_regex.exec(el.id).slice(1);
+          let or_lesson_ = Object.keys(json_data.data)[or_lesson_id_];
+          problem_regex.lastIndex = 0;
+          el.id = `problem-sect-label-${new_lesson_id}-${el_id}`; 
+          let or_item = json_data.data[or_lesson_].filter(item => item.id == or_item_id)[0];
+          or_item.id = el_id;
+          new_lesson_data.push(or_item);
+        }
+        return new_lesson_data;
+      }
       function createLessonEditor(lesson, id) {
         //Basic functionality
         let label = document.createElement('h3');
@@ -620,7 +789,7 @@
           let confirm = prompt(`Are you sure you want to delete Lesson "${lesson}"?\nType the lesson name to confirm.`);
           if (confirm.toLowerCase().trim() !== lesson.toLowerCase().trim())
             return alert("Did not delete.");
-          delete json_data.problems[lesson];
+          delete json_data.data[lesson];
           json_data_el.value = JSON.stringify(json_data, null, 2);
           format();
         }
@@ -638,23 +807,49 @@
         data_page.appendChild(name_label);
         data_page.appendChild(name);
         name.onchange = onchange;
-        let problems_sect_label = document.createElement('h4');
-        problems_sect_label.innerText = "Problems:";
         let problems_sect = document.createElement('div');
         problems_sect.style['padding-left'] = '5px';
-        data_page.appendChild(problems_sect_label);
+        problems_sect.id = `problems-sect-${id}`;
         data_page.appendChild(problems_sect);
-        console.log(json_data.problems, lesson);
-        console.log(json_data.problems[lesson]);
-        for (let problem of json_data.problems[lesson])
+        for (let problem of json_data.data[lesson])
           createProblemEditor(problem, lesson, id, problems_sect);
+        let sortable = new Sortable(problems_sect, {
+          group: "problems",
+          sort: true,
+          draggable: '.data-item',
+          setData: function (dataTransfer, dragEl) {
+        		dataTransfer.setData('Text', dragEl.id); // `dataTransfer` object of HTML5 DragEvent
+        	},
+          onEnd: function (evt) {
+            console.log('Drop!');
+            let itemEl = evt.item;
+            // itemEl.id
+            // evt.to;
+            let problem_regex = /problem-sect-label-(\d+)-(\d+)/ig;
+            let lesson_regex = /problems-sect-(\d+)/ig;
+            let result = problem_regex.exec(evt.item.id);
+            if (!result) return;
+            problem_regex.lastIndex = 0;
+            let [or_lesson_id, or_problem_id] = result.slice(1);
+            let or_lesson = Object.keys(json_data.data)[or_lesson_id];
+            let new_lesson_id = lesson_regex.exec(evt.to.id)[1];
+            let new_lesson = Object.keys(json_data.data)[new_lesson_id];
+            if (new_lesson_id !== or_lesson_id) {
+              let problem = json_data.data[or_lesson].filter(item => item.id == or_problem_id)[0];
+              json_data.data[new_lesson].push(problem);
+              json_data.data[new_lesson] = sortLesson(new_lesson_id, evt.to, problem_regex);
+              json_data.data[or_lesson] = json_data.data[or_lesson].filter(item => item.id != or_problem_id);
+            }
+            json_data.data[or_lesson] = sortLesson(or_lesson_id, evt.from, problem_regex);
+          }
+        });
         let new_problem = document.createElement('button');
         new_problem.innerText = "New Problem";
         new_problem.classList.add('shadow-press');
         new_problem.onclick = e => {
-          let p_id = json_data.problems[lesson].length;
+          let p_id = json_data.data[lesson].length;
           while (true) {
-            for (let p of json_data.problems[lesson]) {
+            for (let p of json_data.data[lesson]) {
               if (p.id === p_id) {
                 p_id++;
                 continue;
@@ -662,7 +857,7 @@
             }
             break;
           }
-          json_data.problems[lesson].push({
+          json_data.data[lesson].push({
             "id": p_id,
             "type": "text",
             "case-sensitive": false,
@@ -681,12 +876,13 @@
       function createLessonStructure() {
         lesson_editor.innerHTML = '';
         let id = 0;
-        for (let lesson of Object.keys(json_data.problems)) {
+        for (let lesson of Object.keys(json_data.data)) {
           createLessonEditor(lesson, id);
           id++;
         }
       }
       function createConceptsEditor() {
+        concepts_editor.innerHTML = ``;
         for (let concept_id in json_data.concepts)
           createConceptEditor(json_data.concepts[concept_id], concepts_editor, concept_id);
         let new_concept = document.createElement('button');
@@ -717,14 +913,15 @@
       }
       new_lesson.onclick = e => {
         let name = 'Unnamed Lesson';
-        json_data.problems[name] = [];
-        json_data.concepts[name] = [];
+        json_data.data[name] = [];
+        json_data.lessons[Object.keys(json_data.lessons).length] = name;
         createLessonEditor(name, Object.keys(json_data.concepts).length - 1);
         json_data_el.value = JSON.stringify(json_data, null, 2);
         format();
       }
       let onchange = description_el.onchange = problems_data_el.onchange = concepts_data_el.onchange = learn_data_el.onchange = name_data_el.onchange = () => {
         //Apply changes to JSON
+        console.log('Changes detected');
         try {
           json_data = jsonic(json_data_el.value);
         } catch (error) {
@@ -734,7 +931,7 @@
         }
         if (!json_data.lessons) {
           json_data.lessons = {};
-          for (let id = 0; id < Object.keys(json_data.concepts).length; id++) {
+          for (let id = 0; id < Object.keys(json_data.data).length; id++) {
             json_data.lessons[id] = Object.keys(json_data.concepts)[id];
           }
         }
@@ -743,7 +940,7 @@
           let label = document.getElementById(`lesson-label-${id}`);
           let lesson = json_data.lessons[id];
           let name = page.querySelector('input[name=name]');
-          for (let problem of json_data.problems[lesson]) {
+          for (let problem of json_data.data[lesson]) {
             let problem_page = document.getElementById(`problem-sect-${id}-${problem.id}`);
             let type = problem_page.querySelector('select[name=type]');
             let scope = problem_page.querySelector('select[name=scope]');
@@ -751,26 +948,22 @@
             let answers = problem_page.querySelector('input[name=answers]');
             let options = problem_page.querySelector('input[name=options]');
             let concepts = problem_page.querySelector('input[name=concepts]');
+            let audio = problem_page.querySelector('input[name=audio]');
+            let background = problem_page.querySelector('input[name=background]');
+            let text_data = document.getElementById(`text-data-${id}-${problem.id}`);
             if (types.includes(type.value) && type.value !== problem.type)
               problem.type = type.value;
             if (scopes.includes(scope.value) && scope.value !== problem.scope)
               problem.scope = scope.value;
-            if (type.value === 'text') {
-              case_sensitive.style.display = 'block';
-              document.getElementById(`case-sensitive-label-${id}-${problem.id}`).style.display = 'block';
-              problem['case-sensitive'] = case_sensitive.checked;
-            } else {
-              case_sensitive.style.display = 'none';
-              document.getElementById(`case-sensitive-label-${id}-${problem.id}`).style.display = 'none';
-            }
+            problem['case-sensitive'] = case_sensitive.checked;
+            handleItems(problem_page, id, problem);
             problem.answers = [];
             if (answers.value !== '') {
               for (let ans of jsonic(answers.value))
                 problem.answers.push(ans.value);
             }
             if (['multiple-choice', 'checkbox'].includes(problem.type)) {
-              document.getElementById(`options-${id}-${problem.id}`).style.transform = 'translateX(0)';
-              document.getElementById(`options-${id}-${problem.id}`).style.display = 'block';
+              showTagify(tagify_data[id][problem.id].options);
               document.getElementById(`options-label-${id}-${problem.id}`).style.display = 'block';
               problem.options = [];
               if (options.value !== '') {
@@ -778,8 +971,7 @@
                   problem.options.push(opt.value);
               }
             } else {
-              options.style.display = 'none';
-              options.style.transform = 'translateX(-10000)';
+              hideTagify(tagify_data[id][problem.id].options);
               document.getElementById(`options-label-${id}-${problem.id}`).style.display = 'none';
             }
             problem['required-concepts'] = [];
@@ -791,26 +983,26 @@
             problem.data[1] = problem_page.querySelector('input[name=background]').value;
             problem.data[2] = problem_page.querySelector('input[name=audio]').value;
           }
-          let c_id = 0;
-          for (let c_id in json_data.concepts) {
-            let concept_page = document.getElementById(`concept-sect-${id}-${c_id}`);
-            let concept = json_data.concepts[c_id];
-            json_data.concepts[c_id] = {};
-            json_data.concepts[c_id].text = text_data_md_vars_concepts[id][c_id].value();
-            json_data.concepts[c_id].background = concept_page.querySelector('input[name=background]').value;
-            json_data.concepts[c_id].audio = concept_page.querySelector('input[name=audio]').value;
-            json_data.concepts[c_id].display = concept_page.querySelector('input[name=display]').checked;
-            c_id++;
-          }
           if (name.value !== lesson) {
-            json_data.problems[name.value] = json_data.problems[lesson];
+            json_data.data[name.value] = json_data.data[lesson];
             json_data.lessons[id] = name.value;
             label.innerText = `˅ ${name.value}`;
             label.name = name.value;
             page.style.display = 'block';
-            delete json_data.problems[lesson];
+            delete json_data.data[lesson];
             lesson = name.value;
           }
+        }
+        let c_id = 0;
+        for (let c_id in json_data.concepts) {
+          let concept_page = document.getElementById(`concept-sect-${c_id}`);
+          let concept = json_data.concepts[c_id];
+          json_data.concepts[c_id] = {};
+          json_data.concepts[c_id].text = text_data_md_vars_concepts[c_id].value();
+          json_data.concepts[c_id].background = concept_page.querySelector('input[name=background]').value;
+          json_data.concepts[c_id].audio = concept_page.querySelector('input[name=audio]').value;
+          json_data.concepts[c_id].display = concept_page.querySelector('input[name=display]').checked;
+          c_id++;
         }
         json_error_el.innerText = 'All Good!';
         json_error_el.style['color'] = 'green';
@@ -860,8 +1052,8 @@
         description_el.value = json_data.description;
         json_data_el.value = JSON.stringify(json_data, null, 2);
         for (let item in required) {
-          if (typeof(json_data[item]) !== required[item]) {
-            json_error_el.innerText = `Expected ${item} to be type ${required[item]}.`;
+          if (!required[item][1](json_data[item])) {
+            json_error_el.innerText = `Expected ${item} to be type ${required[item][0]}.`;
             json_error_el.style['color'] = 'red';
             return json_data_el.style['border-left'] = '3px solid red';
           }
@@ -884,8 +1076,8 @@
           return alert('Cannot Save! JSON data invalid! See error.');
         }
         for (let item in required) {
-          if (typeof(json_data[item]) !== required[item]) {
-            json_error_el.innerText = `Expected ${item} to be type ${required[item]}.`;
+          if (!required[item][1](json_data[item])) {
+            json_error_el.innerText = `Expected ${item} to be type ${required[item][0]}.`;
             json_error_el.style['color'] = 'red';
             json_data_el.style['border-left'] = '3px solid red';
             return alert('Cannot Save! JSON data invalid! See error.');

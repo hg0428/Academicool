@@ -78,7 +78,7 @@ function loadData() {
         concept = {text: concept[0] || '', background: concept[1] || '', audio: concept[2] || '', display: concept[3] || true};
       ul.innerHTML += `<li>${markdown.toHTML(concept.text)}</li>`;
     }
-    if (course.problems[lesson].length > 0) {
+    if (course.data[lesson].length > 0) {
       problems_sect.innerHTML += `<h2>${lesson.replaceAll('>', '&gt;').replaceAll('<', '&lt;')}</h2><button id="problems-only-${id}" class="shadow-press">Run problems only.</button>`;
       document.getElementById(`problems-only-${id}`).addEventListener('click', e => runLesson(lesson, false, true));
     }
@@ -149,7 +149,7 @@ for (let concepts_btn of concepts_btns) {
     learn_sect.style["z-index"] = -1;
     concepts_sect.style["z-index"] = 1;
     problems_sect.style["z-index"] = -1;
-    section_selector_dropdown_trigger.innerHTML = `<img src="/static/img/arrow.svg"/>${course["titles"]["concepts"]}`;
+    section_selector_dropdown_trigger.innerHTML = `<img src="/static/img/arrow.svg"/>${course.titles.concepts}`;
     bottombar_concepts_btn.classList.add("current");
     bottombar_problems_btn.classList.remove("current");
     bottombar_learn_btn.classList.remove("current");
@@ -160,7 +160,7 @@ for (let problems_btn of problems_btns) {
     learn_sect.style["z-index"] = -1;
     concepts_sect.style["z-index"] = -1;
     problems_sect.style["z-index"] = 1;
-    section_selector_dropdown_trigger.innerHTML = `<img src="/static/img/arrow.svg"/>${course["titles"]["problems"]}`;
+    section_selector_dropdown_trigger.innerHTML = `<img src="/static/img/arrow.svg"/>${course.titles.problems}`;
     bottombar_concepts_btn.classList.remove("current");
     bottombar_problems_btn.classList.add("current");
     bottombar_learn_btn.classList.remove("current");
@@ -186,9 +186,9 @@ function checkProblem(problem, answers) {
 function runLesson(lesson, concepts = true, all=false) {
   let problems;
   if (!all)
-    problems = course["problems"][lesson].filter(pr => pr.scope === 'required');
+    problems = course.data[lesson].filter(pr => pr.scope === 'required');
   else 
-    problems = course["problems"][lesson];
+    problems = course.data[lesson];
   
   if (concepts)
     runClass(lesson, course["concepts"], problems);
@@ -199,13 +199,13 @@ function runPersonalized(length=10) {
   //calculate concept averages
   let progress = JSON.parse(window.localStorage.getItem('courses'))[course.id];
   if (user) progress = user['courses'][course.id];
-  for (let lesson in course.problems) {
+  for (let lesson in course.data) {
     if (!Object.keys(progress['completed-lessons']).includes(lesson))
       continue;
     let lesson_scores = progress['completed-lessons'][lesson].scores;
     failed_concepts[lesson] = {};
-    for (let problem_in in course.problems[lesson]) {
-      let problem = course.problems[lesson][problem_in];
+    for (let problem_in in course.data[lesson]) {
+      let problem = course.data[lesson][problem_in];
       if (Object.keys(lesson_scores).includes(problem_in)) {
         for (let con of problem['required-concepts']) {
           if (!failed_concepts[lesson][con]) failed_concepts[lesson][con] = [0, 0];
@@ -226,8 +226,8 @@ function runPersonalized(length=10) {
     }
   }
   //Build lesson
-  for (let lesson in course.problems) {
-    for (let problem of course.problems[lesson]) {
+  for (let lesson in course.data) {
+    for (let problem of course.data[lesson]) {
       problem.lesson = lesson;
     }
   }
@@ -236,7 +236,7 @@ function runPersonalized(length=10) {
     for (let concept in failed_concepts[lesson]) {
       //Find all problems using concept
       if (failed_concepts[lesson][concept] < 100)
-        for (let problem of course['problems'][lesson].filter(pr => pr['required-concepts'].includes(concept))) {
+        for (let problem of course.data[lesson].filter(pr => pr['required-concepts'].includes(concept))) {
           let exists = false;
           for (let added of problems) {
             if (deepEqual(added, problem)) {
@@ -300,7 +300,7 @@ function runPersonalized(length=10) {
       }));
     for (let id in scores) {
       let original = idToOriginal[id];
-      let original_problem = course.problems[original[0]].filter(p => p.id === original[1])[0];
+      let original_problem = course.data[original[0]].filter(p => p.id === original[1])[0];
       
       if (!courses[course.id]["completed-lessons"][original_problem.lesson])
         courses[course.id]["completed-lessons"][original_problem.lesson] = {};
@@ -322,43 +322,25 @@ function runClass(lesson, concepts, problems, required_enabled = true, onEnd=nul
     class_overlay_content.innerHTML = '<h2>This lesson has no content.</h2>'
     return;
   }
-  //console.log(problems);
-  problems.sort((a, b) => {
-    //console.log('sorting')
-    let delindex = 0;
-    let areq = new Set(a["required-concepts"]);
-    let breq = new Set(b["required-concepts"]);
-    for (
-      let x = 0;
-      x <=
-      Math.max(
-        Math.max(a["required-concepts"]),
-        Math.max(b["required-concepts"]),
-      );
-      x++
-    ) {
-      if (areq.legnth === 0 && breq.legnth > 0) return -1;
-      if (breq.legnth === 0 && areq.length > 0) return 1;
-      if (areq.legnth === 0 && breq.legnth === 0) return 0;
-      areq.delete(x);
-      breq.delete(x);
-    }
-  }); //SORT NOT WORKING!!
-  //console.log(problems);
+  problems.sort((a, b) => b.id-a.id);
   progress_dots_div.innerHTML = "";
   let totalitems = 0;
+  let seen_concepts = [];
   for (let x = 0; x < problems.length; x++) {
     let dot = document.createElement("div");
     dot.classList.add("dot");
     progress_dots_div.appendChild(dot);
     totalitems++;
     for (let i = 0; i < problems[x]['required-concepts'].length; i++) {
+      if (seen_concepts.includes(problems[x]['required-concepts'][i])) continue;
       let dot = document.createElement("div");
       dot.classList.add("dot");
       progress_dots_div.appendChild(dot);
       totalitems++;
+      seen_concepts.push(problems[x]['required-concepts'][i]);
     }
   }
+  console.log(seen_concepts, totalitems, problems.length, concepts.length);
   let given_concepts = [];
   let problemIndex = 0;
   let completed = 0;
@@ -386,7 +368,7 @@ function runClass(lesson, concepts, problems, required_enabled = true, onEnd=nul
 
     save();
     window.localStorage.setItem('courses', JSON.stringify(courses));
-    let lesson_id = Object.keys(course.problems).indexOf(lesson);
+    let lesson_id = Object.keys(course.data).indexOf(lesson);
     document.getElementById(`lesson-title-${lesson_id}`).innerText = `${lesson} ✅`;
   }
   function displayConcept(c_id) {
@@ -412,33 +394,32 @@ function runClass(lesson, concepts, problems, required_enabled = true, onEnd=nul
       class_overlay_content.appendChild(audio);
     }
     given_concepts.push(c_id);
-    if (completed < totalitems) {
-      class_continue.onclick = function () {
-        progress_dots_div.children[completed - 1].classList.add(
-          "completed",
-        );
-        nextItem();
-      };
-    } else {
+    if (completed >= totalitems)
       class_continue.innerText = "Finish";
-      class_continue.onclick = function () {
-        progress_dots_div.children[completed - 1].classList.add(
-          "completed",
-        );
-        endLesson();
-      };
-    }
+    class_continue.onclick = function () {
+      progress_dots_div.children[completed - 1].classList.add(
+        "completed",
+      );
+      if (completed < totalitems) nextItem();
+      else endLesson();
+    };
   }
   function nextItem() {
     completed++;
     //Only do ones with scope of required. 
     //If they get a problem wrong, look at its required concepts, and give them other problems that use those concepts in personalized practise.
+    //Maybe give extra if they get problems with that concept wrong.
     let problem = problems[problemIndex];
     for (let c_id of problem["required-concepts"]) {
       if (!given_concepts.includes(c_id) && required_enabled && concepts[c_id].display !== false)
         return displayConcept(c_id);
     }
     problemIndex++;
+    if (problem.type === 'collection') {
+      //TODO: Handle collection
+      if (completed < totalitems) nextItem();
+      else endLesson();
+    }
     let getanswer, applycorrect;
     let audio;
     class_overlay_content.innerHTML = '';
@@ -460,15 +441,10 @@ function runClass(lesson, concepts, problems, required_enabled = true, onEnd=nul
       class_overlay_content.appendChild(audio);
     }
 
-    
+    class_overlay_content.innerHTML += `<form id="lesson-form" action="" onsubmit="return false;"><fieldset id="form-fieldset"></fieldset></form>`;
+    let fieldset = document.getElementById("form-fieldset");
     if (problem.type === "text" || problem.type === "number") {
-      class_overlay_content.innerHTML += `
-      <form id="lesson-form" action="">
-        <fieldset id="form-fieldset">
-          <input id="answer" type="text"/>
-        </fieldset>
-      </form>
-      `;
+      fieldset.innerHTML += `<input id="answer" type="text"/>`;
       getanswer = () => {
         let value = document.getElementById("answer").value;
         if (problem.type === "number" && isNaN(value)) {
@@ -482,8 +458,6 @@ function runClass(lesson, concepts, problems, required_enabled = true, onEnd=nul
         answer.value = problem.answers[0];
       };
     } else if (problem.type === "multiple-choice") {
-      class_overlay_content.innerHTML += `<form id="lesson-form" action="" onsubmit="return false;"><fieldset id="form-fieldset"></fieldset></form>`;
-      let fieldset = document.getElementById("form-fieldset");
       for (let option_in in problem.options)
         fieldset.innerHTML += `<div class="labelset"><label for="answer-${option_in
           .replaceAll("<", "&lt;")
@@ -519,8 +493,6 @@ function runClass(lesson, concepts, problems, required_enabled = true, onEnd=nul
         }
       }
     } else if (problem.type === "checkbox") {
-      class_overlay_content.innerHTML += `<form id="lesson-form" action="" onsubmit="return false;"><fieldset id="form-fieldset"></fieldset></form>`;
-      let fieldset = document.getElementById("form-fieldset");
       for (let option_in in problem.options)
         fieldset.innerHTML += `<div class="labelset"><label for="answer-${option_in
           .replaceAll("<", "&lt;")
@@ -553,46 +525,38 @@ function runClass(lesson, concepts, problems, required_enabled = true, onEnd=nul
           }
       };
     }
-
-
     
     let form = document.getElementById("lesson-form");
-    class_continue.innerText = "Check";
-    
-    if (completed < totalitems) {
-      class_continue.onclick = function (e) {
+    if (['data'].includes(problem.type))
+      class_continue.innerText = "Continue";
+    else 
+      class_continue.innerText = "Check";
+    let score;
+    class_continue.onclick = function (e) {
+      if (!['data'].includes(problem.type)) {
         let answer = getanswer();
         applycorrect();
         if (answer === null) return;
         score = checkProblem(problem, answer);
         scores[problem.id] = score;
-        if (score > 50)
-          progress_dots_div.children[completed - 1].classList.add("completed");
-        else progress_dots_div.children[completed - 1].classList.add("failed");
-        class_continue.innerText = "Continue";
-        document.getElementById("form-fieldset").disabled = true;
+      } else score = 100;
+      
+      if (score > 50)
+        progress_dots_div.children[completed - 1].classList.add("completed");
+      else progress_dots_div.children[completed - 1].classList.add("failed");
+      document.getElementById("form-fieldset").disabled = true;
+      if (completed < totalitems) {
+        if (!['data'].includes(problem.type)) return nextItem();
+        class_continue.innerText = "Continue"
         class_continue.onclick = nextItem;
-      };
-    } else {
-      // Last problem
-      class_continue.onclick = function (e) {
-        let answer = getanswer();
-        applycorrect();
-        if (answer === null) return false;
-        score = checkProblem(problem, answer);
-        scores[problem.id] = score;
-        if (score > 50)
-          progress_dots_div.children[completed - 1].classList.add("completed");
-        else progress_dots_div.children[completed - 1].classList.add("failed");
-        
+      } else {
+        if (!['data'].includes(problem.type)) return endLesson();
         class_continue.innerText = "Finish";
-        document.getElementById("form-fieldset").disabled = true;
         class_continue.onclick = () => endLesson();
-
-      };
-    }
+      }
+    };
     form.addEventListener("keydown", (evt) => {
-      if (evt.keyCode === 13 && !evt.shiftKey) class_continue.click();
+      //if (evt.keyCode === 13 && !evt.shiftKey) class_continue.click();
       if (
         problem.type === "number" &&
         (evt.which < 48 || evt.which > 57) &&

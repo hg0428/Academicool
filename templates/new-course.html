@@ -65,7 +65,7 @@
       -moz-user-select:none;
       cursor: pointer;
     }
-    .card #creator {
+    .card .creator {
       margin-top: 10px;
       display: flex;
       align-items:center;
@@ -81,17 +81,17 @@
       vertical-align: middle;
       height: calc(var(--profile-pic-size) + 2px);
     }
-    .card #creator * {
+    .card .creator * {
       user-select: none;
       -webkit-user-select:none;
       -ms-user-select:none;
       -moz-user-select:none;
       cursor: pointer;
     }
-    .card #creator span {
+    .card .creator span {
       font-size: calc(var(--profile-pic-size) / 2.3);
     }
-    .card #creator:hover {
+    .card .creator:hover {
       transform: translateZ(40px);
       filter: brightness(120%);
     }
@@ -116,7 +116,7 @@
     <h1>{{message}}</h1>
     {% for course in courses %}
         <div class="card" onclick="window.location.href='/course/preview/{{course}}';" data-tilt  data-tilt-glare data-tilt-max-glare="0.5" data-tilt-speed="600" data-tilt-perspective="900" data-tilt-max="40">
-          <div style="position:relative;" id="creator">
+          <div style="position:relative;" class="creator">
             <img src="{{users[courses[course]['creator']]['pic']}}" class="profile-pic">
           <span>{{users[courses[course]['creator']]['user-name']}}</span>
           </div>
