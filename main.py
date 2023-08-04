@@ -22,15 +22,14 @@ for course_file in course_files.iterdir():
     concepts = []
     for lesson in course['concepts']:
       oldToNew = {}
-      i=0
-      for c in course['concepts'][lesson]:
+      for i, c in enumerate(course['concepts'][lesson]):
         oldToNew[str(i)] = str(len(concepts))
         concepts.append(c)
-        i+=1
       for p in course['problems'][lesson]:
-        req_concepts = []
-        for c in course['problems'][lesson][p['id']]['required-concepts']:
-          req_concepts.append(oldToNew[c])
+        req_concepts = [
+            oldToNew[c]
+            for c in course['problems'][lesson][p['id']]['required-concepts']
+        ]
         course['problems'][lesson][p['id']]['required-concepts'] = req_concepts
     course['concepts'] = concepts
   if 'data' not in course:
@@ -244,7 +243,7 @@ async def add_course(course_id):
 
 @app.route('/course/remove/<course_id>')
 async def remove_course(course_id):
-  if not course_id in courses:
+  if course_id not in courses:
     return 404, "Ha! You can't delete a course that doesn't exist!"
   del db[g.user_id]['courses'][course_id]
   if db[g.user_id]['most-recently-opened-course'] == course_id:
@@ -258,12 +257,11 @@ async def delete_course(course_id):
     return 'Must be logged in!! <a href="/begin">Click Here to go to login</a>'
   if course_id not in courses:
     return '404, cannot find course. <a href="/course/new">Click here to return to course browser.</a>'
-  if g.user and g.user['id'] in courses[course_id]['editors']:
-    os.remove(course_data_path + '/' + course_id + '.json')
-    del courses[course_id]
-    return redirect('/course')
-  else:
+  if g.user['id'] not in courses[course_id]['editors']:
     return 'No permision<a href="/course/new">Click here to return to course browser.</a>'
+  os.remove(f'{course_data_path}/{course_id}.json')
+  del courses[course_id]
+  return redirect('/course')
 
 
 @app.route('/course/create')
@@ -298,8 +296,7 @@ async def create_course():
       "problems": {},
       "lessons": {}
   }
-  open(course_data_path + "/" + id + '.json',
-       'w').write(json.dumps(courses[id]))
+  open(f"{course_data_path}/{id}.json", 'w').write(json.dumps(courses[id]))
   db[g.user['id']]['editable-courses'].append(id)
   return redirect(f'/course/edit/{id}')
 
@@ -335,15 +332,6 @@ async def save_course():
   #Check data
   if g.user['id'] != data['creator']:
     data['creator'] = g.user['id']
-  #   for lesson in data['concepts']:
-  #     if type(lesson) != str:
-  #       del data['concepts'][lesson]
-  #     elif type(data['concepts'][lesson]) != list:
-  #       data['concepts'][lesson] = []
-  #     if lesson not in data['data']:
-  #       data['data'][lesson] = []
-  
-      #TODO: check and make sure all concepts are valid.
   if type(data.get('data')) != dict:
     data['data'] = {}
   else:
@@ -389,7 +377,7 @@ async def save_course():
             u_id = db[user_id_1]['id']
       db[u_id]['editable-courses'].append(data['id'])
   courses[data['id']] = data
-  open(course_data_path + "/" + data['id'] + '.json',
+  open(f"{course_data_path}/" + data['id'] + '.json',
        'w').write(json.dumps(courses[data['id']]))
   return {"error": False, "data": data}
 
