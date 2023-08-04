@@ -19,17 +19,14 @@ courses = {}
 for course_file in course_files.iterdir():
   course = json.load(open(course_file))
   if isinstance(course['concepts'], dict):
-    print('updating', course['titles']['course'])
     concepts = []
     for lesson in course['concepts']:
-      print(lesson)
       oldToNew = {}
       i=0
       for c in course['concepts'][lesson]:
         oldToNew[str(i)] = str(len(concepts))
         concepts.append(c)
         i+=1
-      print(oldToNew)
       for p in course['problems'][lesson]:
         req_concepts = []
         for c in course['problems'][lesson][p['id']]['required-concepts']:
@@ -119,7 +116,8 @@ async def before_req():
           "editable-courses": [],
           "version": 3,
           "email-verified": data['isVerified'],
-          "files": []
+          "files": [],
+          "uploaded_bytes": 0
       }
     elif db[g.user_id].get("version", -1) < 3:
       data = await fetch_user_data(g.user_name)
@@ -135,8 +133,9 @@ async def before_req():
           db[g.user_id]['uploaded_bytes'] += os.stat(
               os.path.join(UPLOAD_FOLDER, f)).st_size
       db[g.user_id]['version'] = 3
+    if not db[g.user_id].get("uploaded_bytes"):
+      db[g.user_id]['uploaded_bytes'] = 0
     g.user = json.loads(db.get_raw(g.user_id))
-  print(g.user)
 
 
 @app.route('/')
@@ -308,7 +307,10 @@ async def create_course():
 @app.route('/begin')
 async def begin():
   if g.loggedin:
-    return quart.redirect('/course')
+    redir = '/course'
+    if request.args.get("redirect"):
+      redir = request.args.get("redirect")
+    return quart.redirect(redir)
   return await render_template('begin.html')
 
 
@@ -327,7 +329,6 @@ async def save_course():
   data = await request.get_json(force=True)
   if courses[data['id']]['creator'] != g.user['id'] and data[
       'id'] not in g.user['editable-courses']:
-    print(g.user['id'], courses[data['id']].creator)
     return {"error": True, "message": 'Permission Denied'}
   #Allow removing editors?
 
@@ -390,13 +391,11 @@ async def save_course():
   courses[data['id']] = data
   open(course_data_path + "/" + data['id'] + '.json',
        'w').write(json.dumps(courses[data['id']]))
-  print('Course saved!')
   return {"error": False, "data": data}
 
 
 @app.route('/api/update-user-courses', methods=['GET', 'POST'])
 async def save_user_scores():
-  print('hERE!')
   if not g.user:
     return {
         "error":
@@ -405,11 +404,9 @@ async def save_user_scores():
         'Must be logged in!! <a href="/begin">Click Here to go to login</a>'
     }
   data = await request.get_json(force=True)
-  print(data)
   for id in data:
     db[g.user['id']]['courses'][id]['completed-lessons'] = data[id][
         'completed-lessons']
-  print('Updated User scores')
   return {"error": False, "data": g.user['courses']}
 
 
@@ -452,11 +449,9 @@ async def account():
                                    message="Upload limit reached.",
                                    user=g.user,
                                    data_limit=ACCOUNT_UPLOAD_LIMIT)
-      print(f'Saving as {newname} with {file_size}')
       db[g.user['id']]['uploaded_bytes'] += file_size
       db[g.user['id']]['files'].append(newname)
-      #print('location', os.path.join(app.config['UPLOAD_FOLDER'], newname))
-      file.seek(0)
+      file.seek(0) #To reset it after reading
       await file.save(os.path.join(app.config['UPLOAD_FOLDER'], newname))
       g.user = json.loads(db.get_raw(g.user_id))
       return await render_template('account.html',

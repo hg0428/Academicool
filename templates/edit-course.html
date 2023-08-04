@@ -686,11 +686,9 @@
         if (type.value === 'text') {
           case_sensitive.style.display = 'block';
           document.getElementById(`case-sensitive-label-${id}-${problem.id}`).style.display = 'block';
-          console.log(id, problem.id);
         } else {
           case_sensitive.style.display = 'none';
           document.getElementById(`case-sensitive-label-${id}-${problem.id}`).style.display = 'none';
-          console.log(id, problem.id);
         }
         if (!problem_types.includes(problem.type)) {
           hideTagify(tagify_data[id][problem.id].answers);
@@ -751,12 +749,11 @@
         let elements = problems_sect.querySelectorAll('.data-item');
         for (let el_id = 0; el_id < elements.length; el_id++) {
           let el = elements[el_id];
-          el.innerText = `${el.innerText.split(' ')[0]} ${el_id}`;
+          el.innerText = `${el.innerText.split(' ').slice(0, -1).join(' ')} ${el_id}`;
           let [or_lesson_id_, or_item_id] = problem_regex.exec(el.id).slice(1);
           let or_lesson_ = Object.keys(json_data.data)[or_lesson_id_];
           problem_regex.lastIndex = 0;
-          el.id = `problem-sect-label-${new_lesson_id}-${el_id}`;
-          console.log(json_data.data[or_lesson_], or_item_id);
+          el.id = `problem-sect-label-${new_lesson_id}-${el_id}`; 
           let or_item = json_data.data[or_lesson_].filter(item => item.id == or_item_id)[0];
           or_item.id = el_id;
           new_lesson_data.push(or_item);
@@ -838,13 +835,11 @@
             let new_lesson_id = lesson_regex.exec(evt.to.id)[1];
             let new_lesson = Object.keys(json_data.data)[new_lesson_id];
             if (new_lesson_id !== or_lesson_id) {
-              json_data.data[new_lesson].push(json_data.data[or_lesson].filter(item => item.id === or_problem_id)[0])
-              json_data.data[or_lesson] = json_data.data[or_lesson].filter(item => item.id !== or_problem_id);
-              json_data.data[new_lesson] = sortLesson(new_lesson_id, evt.tp, problem_regex);
-              //Sort new list
+              let problem = json_data.data[or_lesson].filter(item => item.id == or_problem_id)[0];
+              json_data.data[new_lesson].push(problem);
+              json_data.data[new_lesson] = sortLesson(new_lesson_id, evt.to, problem_regex);
+              json_data.data[or_lesson] = json_data.data[or_lesson].filter(item => item.id != or_problem_id);
             }
-            //Sort old list w/ ids
-            
             json_data.data[or_lesson] = sortLesson(or_lesson_id, evt.from, problem_regex);
           }
         });
@@ -942,7 +937,6 @@
         }
         for (let id in json_data.lessons) {
           let page = document.getElementById(`lesson-data-page-${id}`);
-          console.log(page, id, json_data.lessons);
           let label = document.getElementById(`lesson-label-${id}`);
           let lesson = json_data.lessons[id];
           let name = page.querySelector('input[name=name]');
@@ -1022,7 +1016,6 @@
           }
         }
         json_data.editors = editors;
-        console.log(json_data)
         json_data.titles.course = name_data_el.value;
         json_data.titles.learn = learn_data_el.value;
         json_data.titles.concepts = concepts_data_el.value;
