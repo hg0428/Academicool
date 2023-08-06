@@ -39,6 +39,17 @@ for course_file in course_files.iterdir():
     del course['problems']
   if 'sections' not in course: # Hold potential collection items here then just collect by id?
     course['sections'] = []
+  if len(course['concepts'])>0 and type(course['concepts'][0]) == list:
+    new_concepts = []
+    for i in range(len(course['concepts'])):
+      new_concepts.append({
+        'id': i,
+        'text': course['concepts'][i][0],
+        'background': course['concepts'][i][1],
+        'audio': course['concepts'][i][2],
+        'display': True
+      })
+    course['concepts'] = new_concepts
   if len(course['concepts'])>0 and not course['concepts'][0].get('id'):
     for i in range(len(course['concepts'])):
       course['concepts'][i]['id'] = i

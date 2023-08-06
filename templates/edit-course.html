@@ -861,6 +861,7 @@
         new_problem.innerText = "New Problem";
         new_problem.classList.add('shadow-press');
         new_problem.onclick = e => {
+          let lesson = json_data.lessons[id];
           let p_id = json_data.data[lesson].length;
           while (true) {
             for (let p of json_data.data[lesson]) {
