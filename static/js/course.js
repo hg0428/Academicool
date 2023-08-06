@@ -322,7 +322,7 @@ function runClass(lesson, concepts, problems, required_enabled = true, onEnd=nul
     class_overlay_content.innerHTML = '<h2>This lesson has no content.</h2>'
     return;
   }
-  problems.sort((a, b) => b.id-a.id);
+  problems.sort((a, b) => a.id-b.id);
   progress_dots_div.innerHTML = "";
   let totalitems = 0;
   let seen_concepts = [];
@@ -332,12 +332,14 @@ function runClass(lesson, concepts, problems, required_enabled = true, onEnd=nul
     progress_dots_div.appendChild(dot);
     totalitems++;
     for (let i = 0; i < problems[x]['required-concepts'].length; i++) {
-      if (seen_concepts.includes(problems[x]['required-concepts'][i])) continue;
+      let c_id = problems[x]['required-concepts'][i];
+      if (!course.concepts[c_id].display || seen_concepts.includes(c_id)) continue;
       let dot = document.createElement("div");
       dot.classList.add("dot");
       progress_dots_div.appendChild(dot);
+      console.log(course.concepts[c_id]);
       totalitems++;
-      seen_concepts.push(problems[x]['required-concepts'][i]);
+      seen_concepts.push(c_id);
     }
   }
   console.log(seen_concepts, totalitems, problems.length, concepts.length);
@@ -444,7 +446,7 @@ function runClass(lesson, concepts, problems, required_enabled = true, onEnd=nul
     class_overlay_content.innerHTML += `<form id="lesson-form" action="" onsubmit="return false;"><fieldset id="form-fieldset"></fieldset></form>`;
     let fieldset = document.getElementById("form-fieldset");
     if (problem.type === "text" || problem.type === "number") {
-      fieldset.innerHTML += `<input id="answer" type="text"/>`;
+      fieldset.innerHTML += `<input id="answer" type="text" placeholder="Type Here"/>`;
       getanswer = () => {
         let value = document.getElementById("answer").value;
         if (problem.type === "number" && isNaN(value)) {
@@ -526,8 +528,12 @@ function runClass(lesson, concepts, problems, required_enabled = true, onEnd=nul
     }
     
     let form = document.getElementById("lesson-form");
-    if (['data'].includes(problem.type))
-      class_continue.innerText = "Continue";
+    if (['data'].includes(problem.type)) {
+      if (completed < totalitems)
+        class_continue.innerText = "Continue";
+      else
+        class_continue.innerText = "Finish";
+    }
     else 
       class_continue.innerText = "Check";
     let score;
@@ -545,13 +551,13 @@ function runClass(lesson, concepts, problems, required_enabled = true, onEnd=nul
       else progress_dots_div.children[completed - 1].classList.add("failed");
       document.getElementById("form-fieldset").disabled = true;
       if (completed < totalitems) {
-        if (!['data'].includes(problem.type)) return nextItem();
+        if (['data'].includes(problem.type)) return nextItem();
         class_continue.innerText = "Continue"
         class_continue.onclick = nextItem;
       } else {
-        if (!['data'].includes(problem.type)) return endLesson();
+        if (['data'].includes(problem.type)) return endLesson();
         class_continue.innerText = "Finish";
-        class_continue.onclick = () => endLesson();
+        class_continue.onclick = endLesson;
       }
     };
     form.addEventListener("keydown", (evt) => {

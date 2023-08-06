@@ -18,6 +18,8 @@ course_files = pathlib.Path(course_data_path)
 courses = {}
 for course_file in course_files.iterdir():
   course = json.load(open(course_file))
+  if course['creator'] not in db.keys():
+    continue
   if isinstance(course['concepts'], dict):
     concepts = []
     for lesson in course['concepts']:
