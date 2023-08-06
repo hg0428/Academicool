@@ -52,7 +52,7 @@ for course_file in course_files.iterdir():
   if len(course['concepts'])>0 and not course['concepts'][0].get('id'):
     for i in range(len(course['concepts'])):
       course['concepts'][i]['id'] = i
-  if not 'num-users' in course:
+  if 'num-users' not in course:
     course['num-users'] = 0
     for u_id in db.keys():
       if course['id'] in db[u_id]['courses']:
