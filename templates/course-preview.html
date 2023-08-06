@@ -62,11 +62,13 @@
           <a href="/static/documents/community-guidelines.html">Guidelines</a>
         </div>
     </div>
+    <center>
     <h1>{{course['titles']['course']}}</h1>
     <div style="position:relative;" class="creator">
       <img src="{{creator['pic']}}" class="profile-pic">
       <span>{{creator['user-name']}}</span>
     </div>
+      <br/>
     {% if course['id'] not in user['courses'] %}
       <button onclick="window.location.href='/course/add/{{course['id']}}';" class="shadow-press">Start!</button>
     {%else%}
@@ -76,6 +78,14 @@
       <button onclick="window.location.href=`/course/edit/{{course['id']}}`">Edit</button>
     {% endif %}
     <p>{{course['description']}}</p>
+    {% if course['num-users'] == 1%}
+      <h2>One Learner!</h2>
+    {% elif course['num-users'] == 0%}
+      <h2>No Learners.</h2>
+    {%else%}
+    <h2>{{course['num-users']}} Learners!</h2>
+    {%endif%}
+      </center>
     <h2>Course Parts:</h2>
     <ul> <!-- Or ol?-->
       {% for x in course['data'] %}
