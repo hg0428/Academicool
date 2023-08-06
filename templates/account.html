@@ -18,6 +18,15 @@
       input[type=text] {
         width: 300px;
       }
+      #stock-img-sect img {
+        width: 200px;
+        display: block;
+        background: white;
+      }
+      audio {
+        display: block;
+        margin: 10px;
+      }
     </style>
   </head>
   <body>
@@ -56,6 +65,80 @@
     <h3 id="data-amt">{{100*user['uploaded_bytes']/data_limit}}% ({{(data_limit-user['uploaded_bytes'])/1000}}kb remaining)</h3>
     <ul id="user-files">
     </ul>
+    <h2>Stock Files:</h2>
+    <h3>Audio:</h3>
+    <h4>Male Voice:</h4>
+      <label>/static/files/audio/male/shalom.m4a</label>
+      <audio controls>
+        <source src="/static/files/audio/male/shalom.m4a" type="audio/x-m4a">
+      </audio>
+    <h4>Female Voice:</h4>
+      <label>/static/files/audio/female/hola.mp3</label>
+      <audio controls>
+        <source src="/static/files/audio/female/hola.mp3" type="audio/mp3">
+      </audio>
+    <h3>Sounds:</h3>
+    <h4>Male Voice:</h4>
+      <label>/static/files/sounds/male/ah.m4a</label>
+      <audio controls>
+        <source src="/static/files/sounds/male/ah.m4a" type="audio/x-m4a">
+      </audio>
+      <label>/static/files/sounds/male/ah.m4a</label>
+      <audio controls>
+        <source src="/static/files/sounds/male/ah.m4a" type="audio/x-m4a">
+      </audio>
+      <label>/static/files/sounds/male/b.m4a</label>
+      <audio controls>
+        <source src="/static/files/sounds/male/b.m4a" type="audio/x-m4a">
+      </audio>
+      <label>/static/files/sounds/male/d.m4a</label>
+      <audio controls>
+        <source src="/static/files/sounds/male/d.m4a" type="audio/x-m4a">
+      </audio>
+      <label>/static/files/sounds/male/ee.m4a</label>
+      <audio controls>
+        <source src="/static/files/sounds/male/ee.m4a" type="audio/x-m4a">
+      </audio>
+      <label>/static/files/sounds/male/eh.m4a</label>
+      <audio controls>
+        <source src="/static/files/sounds/male/eh.m4a" type="audio/x-m4a">
+      </audio>
+      <label>/static/files/sounds/male/g.m4a</label>
+      <audio controls>
+        <source src="/static/files/sounds/male/g.m4a" type="audio/x-m4a">
+      </audio>
+      <label>/static/files/sounds/male/sh.m4a</label>
+      <audio controls>
+        <source src="/static/files/sounds/male/sh.m4a" type="audio/x-m4a">
+      </audio>
+      <label>/static/files/sounds/male/sha.m4a</label>
+      <audio controls>
+        <source src="/static/files/sounds/male/sha.m4a" type="audio/x-m4a">
+      </audio>
+     <label>/static/files/sounds/male/v.m4a</label>
+      <audio controls>
+        <source src="/static/files/sounds/male/v.m4a" type="audio/x-m4a">
+      </audio>
+      <h5>TODO: make stock audio files for many different words and every sound.</h5>
+    <h4>Female Voice:</h4>
+    None
+    <h3>Images:</h3>
+    <div id="stock-img-sect">
+      <label>/static/img/apple.png</label>
+      <img src="/static/img/apple.png"/>
+      <label>/static/img/waving.png</label>
+      <img src="/static/img/waving.png"/>
+      <label>/static/img/waving-1.png</label>
+      <img src="/static/img/waving-1.png"/>
+      <label>/static/img/logo.png</label>
+      <img src="/static/img/logo.png"/>
+      <label>/static/img/default-profile.png</label>
+      <img src="/static/img/default-profile.png"/>
+      <label>/static/img/arrow.svg</label>
+      <img src="/static/img/arrow.svg"/>
+      <label>/static/img/hamburger.png</label>
+      <img src="/static/img/hamburger.png"/>
+      </div>
     <script>
       const user = {{ user|tojson|safe }};
       const files_el = document.getElementById('user-files');

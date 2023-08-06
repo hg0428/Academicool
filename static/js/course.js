@@ -514,7 +514,6 @@ function runClass(lesson, concepts, problems, required_enabled = true, onEnd=nul
         for (let i of raw_answers)
           answers.push(i.value)
         return answers;
-        //TODO
       };
       applycorrect = () => {
         let els = document.querySelectorAll('input[name="answer"]');

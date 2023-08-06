@@ -288,7 +288,8 @@
       let course_sections = document.getElementById('course-sections');
       let new_course_section_btn = document.getElementById('new-course-section');
       new_course_section_btn.onclick = e => {
-        
+        let newSect = document.createElement(); //Use sorting thing like lessons
+        course_sections
       }
       function tagTemplate(tagData) {
         let id = tagData.value;
@@ -343,24 +344,37 @@
       let tagify_data = {};
       function createConceptEditor(concept, concepts_sect, id) {
         let concept_sect_label = document.createElement('h5');
+        concept_sect_label.classList.add('data-item');
+        concept_sect_label.id = `concept-label-${id}`;
         let concept_sect = document.createElement('div');
         concepts_sect.appendChild(concept_sect_label);
         concepts_sect.appendChild(concept_sect);
         concept_sect.id = `concept-sect-${id}`
+        concept_sect.classList.add('editor-popup');
         concept_sect.style['padding-left'] = '6px';
-        concept_sect_label.innerText = `˃ Concept ${id}`;
-        concept_sect.style.display = 'none';
+        concept_sect_label.innerText = `Concept ${id}`;
         concept_sect_label.classList.add('clickable-text');
         concept_sect_label.onclick = function() {
           if (concept_sect.style.display === 'none') {
             concept_sect.style.display = 'block';
-            concept_sect_label.innerText = `˅ Concept ${id}`;
-          } else {
-            concept_sect.style.display = 'none';
-            concept_sect_label.innerText = `˃ Concept ${id}`;
           }
         }
-    
+        concept_sect.style = 'padding-top:60px;display:none;';
+        let topdiv = document.createElement('div');
+        topdiv.classList.add('space-between');
+        topdiv.style='position:fixed;left:0;top:0;padding: 10px 20px;'
+        let concept_sect_popup_label = document.createElement('h2');
+        concept_sect_popup_label.innerText = `Editing Concept ${id}`;
+        topdiv.appendChild(concept_sect_popup_label);
+        let exit_btn = document.createElement('button');
+        exit_btn.classList.add('popup-back-btn');
+        exit_btn.onclick = e => {
+          concept_sect.style.display = 'none';
+        }
+        exit_btn.innerText = 'X';
+        topdiv.appendChild(exit_btn);
+        concept_sect.appendChild(topdiv);
+        
         let text_data_label = document.createElement('label');
         let text_data = document.createElement('textarea');
         text_data.id = `concepts-text-data-${id}`;
@@ -754,7 +768,7 @@
           let or_lesson_ = Object.keys(json_data.data)[or_lesson_id_];
           problem_regex.lastIndex = 0;
           el.id = `problem-sect-label-${new_lesson_id}-${el_id}`; 
-          let or_item = json_data.data[or_lesson_].filter(item => item.id == or_item_id)[0];
+          let or_item = {...json_data.data[or_lesson_].filter(item => item.id == or_item_id)[0]};
           or_item.id = el_id;
           new_lesson_data.push(or_item);
         }
@@ -814,7 +828,7 @@
         for (let problem of json_data.data[lesson])
           createProblemEditor(problem, lesson, id, problems_sect);
         let sortable = new Sortable(problems_sect, {
-          group: "problems",
+          group: "lesson",
           sort: true,
           draggable: '.data-item',
           setData: function (dataTransfer, dragEl) {
@@ -885,6 +899,32 @@
         concepts_editor.innerHTML = ``;
         for (let concept_id in json_data.concepts)
           createConceptEditor(json_data.concepts[concept_id], concepts_editor, concept_id);
+        let sortable = new Sortable(concepts_editor, {
+          group: "concepts",
+          sort: true,
+          draggable: '.data-item',
+          setData: function (dataTransfer, dragEl) {
+        		dataTransfer.setData('Text', dragEl.id); // `dataTransfer` object of HTML5 DragEvent
+        	},
+          onEnd: function (evt) {
+            console.log('Drop in Concepts!');
+            let itemEl = evt.item;
+            let new_concepts = [];
+            let elements = concepts_editor.querySelectorAll('.data-item');
+            let concept_regex = /concept-label-(\d+)/ig
+            for (let el_id = 0; el_id < elements.length; el_id++) {
+              let el = elements[el_id];
+              el.innerText = `Concept ${el_id}`;
+              let or_c_id = concept_regex.exec(el.id)[1];
+              concept_regex.lastIndex = 0;
+              el.id = `concept-label-${el_id}`; 
+              let or_c = {...json_data.concepts.filter(c => c.id == or_c_id)[0]};
+              or_c.id = el_id;
+              new_concepts.push(or_c);
+            }
+            json_data.concepts = new_concepts;
+          }
+        });
         let new_concept = document.createElement('button');
         new_concept.innerText = "New Concept";
         new_concept.classList.add('shadow-press');
@@ -997,12 +1037,11 @@
         for (let c_id in json_data.concepts) {
           let concept_page = document.getElementById(`concept-sect-${c_id}`);
           let concept = json_data.concepts[c_id];
-          json_data.concepts[c_id] = {};
+          json_data.concepts[c_id] = {id: concept.id};
           json_data.concepts[c_id].text = text_data_md_vars_concepts[c_id].value();
           json_data.concepts[c_id].background = concept_page.querySelector('input[name=background]').value;
           json_data.concepts[c_id].audio = concept_page.querySelector('input[name=audio]').value;
           json_data.concepts[c_id].display = concept_page.querySelector('input[name=display]').checked;
-          c_id++;
         }
         json_error_el.innerText = 'All Good!';
         json_error_el.style['color'] = 'green';
@@ -1034,6 +1073,7 @@
         }
         for (let c_id in json_data.concepts) {
           if (Array.isArray(json_data.concepts[c_id])) {
+            console.log('Here');
             let concept = json_data.concepts[c_id];
             json_data.concepts[c_id] = {
               text: concept[0],
@@ -1087,7 +1127,7 @@
         json_error_el.style['color'] = 'green';
         json_data_el.style['border-left'] = '3px solid green';
         //Bless the Lord.
-        json_data.id = "{{course.id}}"
+        json_data.id = "{{course.id}}";
         json_data.titles.course = name_data_el.value;
         json_data.titles.learn = learn_data_el.value;
         json_data.titles.concepts = concepts_data_el.value;

@@ -39,15 +39,13 @@ for course_file in course_files.iterdir():
     del course['problems']
   if 'sections' not in course: # Hold potential collection items here then just collect by id?
     course['sections'] = []
-  #TODO; rename to data
+  if len(course['concepts'])>0 and not course['concepts'][0].get('id'):
+    for i in range(len(course['concepts'])):
+      course['concepts'][i]['id'] = i
   json.dump(course, open(course_file, 'w'))
   #Migrate course structure to the latest format.
   courses[course['id']] = course
 print(f'We have {len(db.keys())} users!')
-for id in db.keys():
-  for course_id in db[id]['courses']:
-    db[id]['courses'][course_id]['course-title'] = courses[course_id][
-        'titles']['course']
 
 #TODO: rate limits
 #https://pypi.org/project/quart-rate-limiter/#:~:text=Quart%2DRate%2DLimiter%20is%20an,Fields%20for%20HTTP%20RFC%20draft.
@@ -66,7 +64,6 @@ def allowed_file(filename):
 
 
 async def fetch_user_data(username):
-  #TODO
   body = {
       'query':
       "query getUserInfo ($username: String!) { userByUsername(username: $username) {bio, isVerified, fullName, image}}",
@@ -108,7 +105,7 @@ async def before_req():
       data = await fetch_user_data(g.user_name)
       db[g.user_id] = {
           "id": g.user_id,
-          "user-name": g.user_name,  #TODO: add data from fetch_user_data
+          "user-name": g.user_name,
           "bio": data['bio'],
           "pic": data['image'] or "/static/img/default-profile.png",
           "courses": {},
@@ -165,7 +162,6 @@ async def course_page():
       return quart.redirect('/course/new')
   else:
     course_id = None
-  #TODO: save
   return await render_template('course-page.html',
                                loggedin=g.loggedin,
                                course=courses.get(course_id),
@@ -176,7 +172,6 @@ async def course_page():
 
 @app.route('/course/new')
 async def new_course_page():
-  #TODO, for finding new courses. Create course button in top.
   #TODO: only send some courses, not all
   message = 'Find a course for you!'
   if request.args.get('new') or (g.user and len(g.user['courses']) == 0):
@@ -198,6 +193,9 @@ async def new_course_page():
 
 @app.route('/course/edit/<course_id>')
 async def edit_course(course_id):
+  if not g.user:
+    return f'Not loggedin. <a href="/begin?redirect=/course/edit/{course_id}">Click here to login</a>'
+
   if course_id not in courses:
     return '404, cannot find course. <a href="/course/new">Click here to return to course browser.</a>'
   if g.user and g.user['id'] in courses[course_id]['editors']:
@@ -213,7 +211,7 @@ async def edit_course(course_id):
                 'pic': db[id]['pic']
             }
             for id in db.keys()
-        })  #TODO, course editor. Make sure the user has edit permisions.
+        }) 
   else:
     return 'No permision<a href="/course/new">Click here to return to course browser.</a>'
 
@@ -255,7 +253,7 @@ async def remove_course(course_id):
 @app.route('/course/delete/<course_id>')
 async def delete_course(course_id):
   if not g.user:
-    return 'Must be logged in!! <a href="/begin">Click Here to go to login</a>'
+    return f'Must be logged in!! <a href="/begin?redirect=/course/edit/{course_id}">Click Here to go to login</a>'
   if course_id not in courses:
     return '404, cannot find course. <a href="/course/new">Click here to return to course browser.</a>'
   if g.user and g.user['id'] in courses[course_id]['editors']:
@@ -269,7 +267,7 @@ async def delete_course(course_id):
 @app.route('/course/create')
 async def create_course():
   if not g.user:
-    return 'Must be logged in!! <a href="/begin">Click Here to go to login</a>'
+    return 'Must be logged in!! <a href="/begin?redirect=/course/create">Click Here to go to login</a>'
   id = str(uuid.uuid4())
   num = 0
   name = 'Untitled Course'
@@ -363,11 +361,10 @@ async def save_course():
         if type(problem.get('data')) != list:
           problem['data'] = []
         #TODO: Handle if there is no id.
-  #TODO: make sure concepts and problems both have the same lessons.
   if type(data.get('titles')) != dict:
     data['titles'] = {
         'course': '',
-        "learn": '',
+        # "learn": '',
         "concepts": "",
         "problems": ""
     }
