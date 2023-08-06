@@ -179,3 +179,9 @@ a {
   width: 100%;
   box-sizing: border-box;
 }
+input {
+  font-size: 1.4rem;
+}
+textarea {
+  font-size: 1.2rem;
+}

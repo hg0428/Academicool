@@ -47,10 +47,12 @@ body, html {
   text-align: center;
   padding: 0.5rem 2rem;
   transition: 0.2s;
+  color: var(--accent-color);
 }
 #bottombar a.current {
   background-color: var(--mix-highlight);
   border: 2px solid var(--highlight-color);
+  color: var(--highlight-color);
 }
 #bottombar a:hover {
   filter: brightness(155%);
