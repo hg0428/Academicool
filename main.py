@@ -52,6 +52,15 @@ for course_file in course_files.iterdir():
   if len(course['concepts'])>0 and not course['concepts'][0].get('id'):
     for i in range(len(course['concepts'])):
       course['concepts'][i]['id'] = i
+  if not 'num-users' in course:
+    course['num-users'] = 0
+    for u_id in db.keys():
+      if course['id'] in db[u_id]['courses']:
+        course['num-users'] += 1
+  for l in course['data']:
+    for i, p in enumerate(course['data'][l]):
+      if 'order' not in p:
+        course['data'][l][i]['order'] = p['id']
   json.dump(course, open(course_file, 'w'))
   #Migrate course structure to the latest format.
   courses[course['id']] = course
