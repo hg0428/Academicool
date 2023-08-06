@@ -70,7 +70,7 @@
     {% if course['id'] not in user['courses'] %}
       <button onclick="window.location.href='/course/add/{{course['id']}}';" class="shadow-press">Start!</button>
     {%else%}
-      <button onclick="abandon();">Abandon</button> <!--TODO: add confirm by typing the course name -->
+      <button onclick="abandon();">Abandon</button>
     {% endif %}
     {% if user and user['id'] in course['editors'] %}
       <button onclick="window.location.href=`/course/edit/{{course['id']}}`">Edit</button>
